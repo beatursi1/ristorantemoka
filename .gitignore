@@ -1,7 +1,35 @@
-﻿config/
-*.env
-node_modules/
-uploads/
-*.log
-.DS_Store
+﻿# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Visual Studio / JetBrains
+.vs/
+.idea/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+
+# Env
+.env
