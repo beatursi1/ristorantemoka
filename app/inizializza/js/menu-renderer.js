@@ -1,0 +1,132 @@
+// menu-renderer.js
+// Contiene la funzione mostrareMenu (layout classico ripristinato)
+
+function mostrareMenu(categorie) {
+    try {
+        const menu = document.getElementById('menu');
+        if (!menu) return;
+        // Svuota contenuto precedente e ripristina layout a card
+        menu.innerHTML = '';
+
+        if (!Array.isArray(categorie) || categorie.length === 0) {
+            menu.innerHTML = '<div class="alert alert-info">Menu vuoto</div>';
+            return;
+        }
+
+        categorie.forEach(categoria => {
+            if (!Array.isArray(categoria.piatti) || categoria.piatti.length === 0) return;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.textContent = categoria.nome || 'Categoria';
+            card.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'card-body p-0';
+
+            categoria.piatti.forEach(piatto => {
+                const item = document.createElement('div');
+                item.className = 'piatto-item d-flex justify-content-between align-items-start py-2 px-3';
+
+                const info = document.createElement('div');
+                info.style.flex = '1';
+
+                const titolo = document.createElement('h5');
+                titolo.className = 'mb-1';
+                titolo.textContent = piatto.nome || 'Voce';
+
+                const descr = document.createElement('p');
+                descr.className = 'text-muted mb-1 small';
+                descr.textContent = piatto.descrizione || '';
+
+                const meta = document.createElement('div');
+                meta.className = 'd-flex align-items-center';
+
+                const prezzoSpan = document.createElement('span');
+                prezzoSpan.className = 'text-success fw-bold';
+                const prezzoVal = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
+                prezzoSpan.textContent = `€${prezzoVal.toFixed(2)}`;
+                meta.appendChild(prezzoSpan);
+
+                if (piatto.tempo_preparazione) {
+                    const badgeTime = document.createElement('span');
+                    badgeTime.className = 'badge bg-secondary ms-2';
+                    const iconTime = document.createElement('i');
+                    iconTime.className = 'fas fa-clock me-1';
+                    badgeTime.appendChild(iconTime);
+                    badgeTime.appendChild(document.createTextNode(String(piatto.tempo_preparazione) + ' min'));
+                    meta.appendChild(badgeTime);
+                }
+                if (piatto.punti_fedelta) {
+                    const badgePunti = document.createElement('span');
+                    badgePunti.className = 'badge bg-warning ms-2';
+                    const iconStar = document.createElement('i');
+                    iconStar.className = 'fas fa-star me-1';
+                    badgePunti.appendChild(iconStar);
+                    badgePunti.appendChild(document.createTextNode(String(piatto.punti_fedelta) + ' punti'));
+                    meta.appendChild(badgePunti);
+                }
+
+                info.appendChild(titolo);
+                info.appendChild(descr);
+                info.appendChild(meta);
+
+                const right = document.createElement('div');
+                right.className = 'ms-3';
+
+                const isBevande = categoria.nome && (categoria.nome.toLowerCase().includes('bevande') || categoria.nome.toLowerCase().includes('drink'));
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-ordina btn btn-sm btn-outline-primary';
+
+                if (isBevande) {
+                    btn.innerHTML = `<i class="fas fa-wine-glass me-1"></i>Ordina`;
+                    btn.addEventListener('click', () => {
+                        const modalEl = document.getElementById('modal-bevande');
+                        const val = String(piatto.id);
+                        if (modalEl) modalEl.dataset.pendingBevanda = val;
+
+                        const sel = document.getElementById('select-bevanda');
+                        if (sel) {
+                            let opt = Array.from(sel.options).find(o => o.value === val);
+                            if (!opt && piatto.nome) {
+                                const nomeLower = String(piatto.nome).toLowerCase();
+                                opt = Array.from(sel.options).find(o => (o.text || '').toLowerCase().includes(nomeLower));
+                            }
+                            if (opt) sel.value = opt.value;
+                        }
+
+                        apriModalBevande();
+                    });
+                } else {
+                    btn.innerHTML = `<i class="fas fa-plus me-1"></i>Aggiungi`;
+                    btn.addEventListener('click', () => {
+                        if (typeof aggiungereAlCarrello === 'function') {
+                            const id = piatto.id;
+                            const nome = piatto.nome || '';
+                            const prezzo = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
+                            aggiungereAlCarrello(id, nome, prezzo);
+                        } else {
+                            alert('Funzione aggiungereAlCarrello non disponibile');
+                        }
+                    });
+                }
+
+                right.appendChild(btn);
+                item.appendChild(info);
+                item.appendChild(right);
+                body.appendChild(item);
+            });
+
+            card.appendChild(body);
+            menu.appendChild(card);
+        });
+    } catch (e) {
+        console.error('mostrareMenu errore (ripristino layout):', e);
+        const menu = document.getElementById('menu');
+        if (menu) menu.innerHTML = '<div class="alert alert-danger">Errore nella visualizzazione del menu</div>';
+    }
+}
