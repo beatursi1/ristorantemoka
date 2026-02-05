@@ -33,3 +33,6 @@ logs/
 
 # Env
 .env
+
+# Ignore production config
+/config/config.php
