@@ -456,9 +456,8 @@ async function caricareMenu() {
                     mostrareMenu(data.data);
                 }
             } else {
-                // If function not yet defined, store macros and try via observer
+                // If function not yet defined, polling mechanism will handle it
                 console.warn('mostrareMacrocategorie not yet defined, will retry when available');
-                window._menu_macros = macros;
             }
         } else {
             try { document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore nel caricamento del menu</div>'; } catch(e){}
