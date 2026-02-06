@@ -5,6 +5,24 @@ function mostrareMenu(categorie) {
     try {
         const menu = document.getElementById('menu');
         if (!menu) return;
+    // Forza vista "solo macrocategorie" quando la sessione cliente è manuale (es. sessione_cliente_id che inizia con 'man_')
+    try {
+      const sess = (parametriUrl && parametriUrl.sessione_cliente_id) || (new URLSearchParams(window.location.search)).get('sessione_cliente_id') || null;
+      if (sess && String(sess).startsWith('man_')) {
+        const macros = Array.isArray(categorie)
+          ? categorie.map(c => ({ nome: c.nome || c.titolo || 'Categoria', sottocategorie: [ c ] }))
+          : [];
+        window._menu_macros = macros;
+        if (typeof window.mostrareMacrocategorie === 'function') {
+          try { window.mostrareMacrocategorie(window._menu_macros); } catch(e){ console.error('mostrareMacrocategorie failed', e); }
+        } else {
+          console.warn('mostrareMacrocategorie non disponibile');
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('forzatura macrocategorie per sessione man_ fallita', e);
+    }
         // Svuota contenuto precedente e ripristina layout a card
         menu.innerHTML = '';
 
@@ -48,7 +66,7 @@ function mostrareMenu(categorie) {
                 const prezzoSpan = document.createElement('span');
                 prezzoSpan.className = 'text-success fw-bold';
                 const prezzoVal = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
-                prezzoSpan.textContent = `€${prezzoVal.toFixed(2)}`;
+                prezzoSpan.textContent = '\u20AC' + prezzoVal.toFixed(2);
                 meta.appendChild(prezzoSpan);
 
                 if (piatto.tempo_preparazione) {
