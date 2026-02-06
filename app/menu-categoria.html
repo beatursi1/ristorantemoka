@@ -55,7 +55,8 @@
       }
 
       // Ricostruisce la struttura "macrocategorie" seguendo la stessa logica di app/menu.js
-      function buildMacrosFrom(categories) {
+      // Export to window for reuse
+      window.buildMacrosFrom = function buildMacrosFrom(categories) {
         if (!Array.isArray(categories)) return [];
         const looksLikeMacros = categories.every(c => c && (Array.isArray(c.sottocategorie) || Array.isArray(c.subcategories) || Array.isArray(c.children) || Array.isArray(c.categorie)));
         if (looksLikeMacros) return categories.slice();
@@ -81,7 +82,7 @@
           wrapperMacro.sottocategorie.push(sub);
         });
         return [ wrapperMacro ];
-      }
+      };
 
       async function init() {
         const raw = await fetchMenu();
