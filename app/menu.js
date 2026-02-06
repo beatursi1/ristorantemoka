@@ -736,8 +736,14 @@ function mostrareMacrocategorie(macros) {
         openBtn.className = 'btn btn-outline-primary btn-sm';
         openBtn.textContent = 'Apri';
         openBtn.addEventListener('click', () => {
-            mostrareCategoriaView(m);
-        });
+  try {
+    const macroParam = encodeURIComponent(m.nome || m.titolo || String(idx));
+    window.location.href = './app/menu-categoria.html?macro=' + macroParam;
+  } catch (e) {
+    // fallback: mostra la vista nella stessa pagina se qualcosa va storto
+    try { mostrareCategoriaView(m); } catch (_) { console.warn('Impossibile navigare o mostrare categoria', e); }
+  }
+});
         openArea.appendChild(openBtn);
         header.appendChild(openArea);
 
