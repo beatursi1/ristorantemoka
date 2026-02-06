@@ -400,13 +400,66 @@ async function registraClienteAutomaticamente(chiaveStorage) {
 }
 
 // Carica menu dall'API
+/*
+  Helper function to build macrocategories from flat category data.
+  This ensures the menu always shows macros by default.
+  Supports multiple data structures: already-macro format, categories with 'macro' field, or flat list.
+*/
+function buildMacrosFrom(categories) {
+    if (!Array.isArray(categories)) return [];
+    
+    // 1) If items already have subcategories/sottocategorie, treat as macros
+    const looksLikeMacros = categories.every(c => c && (Array.isArray(c.sottocategorie) || Array.isArray(c.subcategories) || Array.isArray(c.children) || Array.isArray(c.categorie)));
+    if (looksLikeMacros) return categories.slice();
+    
+    // 2) If categories have a 'macro' field, group them by macro name
+    const hasMacroField = categories.some(c => c && typeof c.macro === 'string' && c.macro.trim().length > 0);
+    if (hasMacroField) {
+        const map = {};
+        categories.forEach(c => {
+            const macroName = (c && c.macro) ? String(c.macro).trim() : 'Altro';
+            map[macroName] = map[macroName] || { nome: macroName, sottocategorie: [] };
+            map[macroName].sottocategorie.push(c);
+        });
+        return Object.keys(map).map(k => map[k]);
+    }
+    
+    // 3) Fallback: wrap all categories under a single 'Menu' macro
+    const wrapperMacro = { nome: 'Menu', sottocategorie: [] };
+    categories.forEach(c => {
+        const sub = {
+            nome: c.nome || c.titolo || 'Categoria',
+            piatti: Array.isArray(c.piatti) ? c.piatti : (c.items || [])
+        };
+        wrapperMacro.sottocategorie.push(sub);
+    });
+    return [ wrapperMacro ];
+}
+
 async function caricareMenu() {
     try {
         const response = await fetch('../api/menu/menu.php');
         const data = await response.json();
         
         if (data && data.success) {
-            mostrareMenu(data.data);
+            // CHANGE: Build macros from the data and show macrocategories by default
+            const macros = buildMacrosFrom(data.data);
+            window._menu_macros = macros;
+            
+            // Show macros by default (hardened call with fallback)
+            if (typeof mostrareMacrocategorie === 'function') {
+                try {
+                    mostrareMacrocategorie(macros);
+                } catch(e) {
+                    console.warn('Error calling mostrareMacrocategorie:', e);
+                    // Fallback to old behavior if macro view fails
+                    mostrareMenu(data.data);
+                }
+            } else {
+                // If function not yet defined, store macros and try via observer
+                console.warn('mostrareMacrocategorie not yet defined, will retry when available');
+                window._menu_macros = macros;
+            }
         } else {
             try { document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore nel caricamento del menu</div>'; } catch(e){}
         }
@@ -514,6 +567,41 @@ window.onload = async function() {
     try { inizializzareUI(); } catch(e) { console.error('errore inizializzareUI onload', e); }
 };
 
+/*
+  Race condition fallback: if mostrareMacrocategorie isn't available yet when caricareMenu runs,
+  this observer will call it as soon as it becomes defined.
+  This ensures macros are shown even if script loading order varies.
+*/
+(function setupMacroFallbackObserver() {
+    // If function already exists and we have macros waiting, call it immediately
+    if (typeof window.mostrareMacrocategorie === 'function' && window._menu_macros) {
+        try {
+            mostrareMacrocategorie(window._menu_macros);
+        } catch(e) {
+            console.warn('Initial macro display failed:', e);
+        }
+        return; // No need for observer
+    }
+    
+    // Set up a polling mechanism as fallback (MutationObserver alternative for function availability)
+    let attempts = 0;
+    const maxAttempts = 20; // Try for ~2 seconds
+    const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof window.mostrareMacrocategorie === 'function' && window._menu_macros) {
+            clearInterval(checkInterval);
+            try {
+                mostrareMacrocategorie(window._menu_macros);
+            } catch(e) {
+                console.warn('Deferred macro display failed:', e);
+            }
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.warn('mostrareMacrocategorie not available after timeout, macro view may not load');
+        }
+    }, 100);
+})();
+
     // AGGIUNTA: mostra pulsante "Torna alla Home cameriere" se arrivo dal cameriere
     if (window.arrivaDaCameriere) {
         const backContainer = document.getElementById('back-to-cameriere-container');
@@ -587,22 +675,29 @@ function creaElementoPiatto(piatto) {
     prezzoSpan.textContent = `€${prezzoVal.toFixed(2)}`;
     meta.appendChild(prezzoSpan);
 
-    if (piatto.tempo_preparazione) {
+    // Normalize cooking time field: support multiple field name variants
+    const tempo = piatto.tempo_preparazione || piatto.tempo || piatto.cook_time || piatto.prep_time || piatto.tempo_min || null;
+    const tempoNum = tempo ? (typeof tempo === 'number' ? tempo : parseFloat(tempo)) : null;
+    if (tempoNum && !isNaN(tempoNum)) {
         const badgeTime = document.createElement('span');
         badgeTime.className = 'badge bg-secondary ms-2';
         const iconTime = document.createElement('i');
         iconTime.className = 'fas fa-clock me-1';
         badgeTime.appendChild(iconTime);
-        badgeTime.appendChild(document.createTextNode(String(piatto.tempo_preparazione) + ' min'));
+        badgeTime.appendChild(document.createTextNode(tempoNum + ' min'));
         meta.appendChild(badgeTime);
     }
-    if (piatto.punti_fedelta) {
+    
+    // Normalize loyalty points field: support multiple field name variants
+    const punti = piatto.punti_fedelta || piatto.punti || piatto.points || piatto.loyalty_points || null;
+    const puntiNum = punti ? (typeof punti === 'number' ? punti : parseFloat(punti)) : null;
+    if (puntiNum && !isNaN(puntiNum)) {
         const badgePunti = document.createElement('span');
         badgePunti.className = 'badge bg-warning ms-2';
         const iconStar = document.createElement('i');
         iconStar.className = 'fas fa-star me-1';
         badgePunti.appendChild(iconStar);
-        badgePunti.appendChild(document.createTextNode(String(piatto.punti_fedelta) + ' punti'));
+        badgePunti.appendChild(document.createTextNode(puntiNum + ' punti'));
         meta.appendChild(badgePunti);
     }
 
@@ -691,6 +786,7 @@ function renderListaPiatti(container, piatti) {
 /*
   Mostra la lista delle macrocategorie (pagina principale).
   macros: array di oggetti { nome, descrizione?, sottocategorie?: [...], count?: number, id? }
+  Exported to window for cross-file access and race-condition handling.
 */
 function mostrareMacrocategorie(macros) {
     const menu = document.getElementById('menu');
@@ -761,6 +857,8 @@ function mostrareMacrocategorie(macros) {
 
     menu.appendChild(grid);
 }
+// Export to window for cross-file access
+window.mostrareMacrocategorie = mostrareMacrocategorie;
 
 /*
   Mostra la vista per una singola macro: elenca le sottocategorie e le relative pietanze
@@ -832,6 +930,8 @@ function mostrareCategoriaView(macro) {
         menu.appendChild(card);
     });
 }
+// Export to window for cross-file access
+window.mostrareCategoriaView = mostrareCategoriaView;
 
 /*
   Wrapper intelligente: decide se la risposta API è già macrocategorie oppure se raggruppare per campo `macro`.

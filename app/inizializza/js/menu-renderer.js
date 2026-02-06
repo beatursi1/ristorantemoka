@@ -51,22 +51,29 @@ function mostrareMenu(categorie) {
                 prezzoSpan.textContent = `€${prezzoVal.toFixed(2)}`;
                 meta.appendChild(prezzoSpan);
 
-                if (piatto.tempo_preparazione) {
+                // Normalize cooking time field: support multiple field name variants
+                const tempo = piatto.tempo_preparazione || piatto.tempo || piatto.cook_time || piatto.prep_time || piatto.tempo_min || null;
+                const tempoNum = tempo ? (typeof tempo === 'number' ? tempo : parseFloat(tempo)) : null;
+                if (tempoNum && !isNaN(tempoNum)) {
                     const badgeTime = document.createElement('span');
                     badgeTime.className = 'badge bg-secondary ms-2';
                     const iconTime = document.createElement('i');
                     iconTime.className = 'fas fa-clock me-1';
                     badgeTime.appendChild(iconTime);
-                    badgeTime.appendChild(document.createTextNode(String(piatto.tempo_preparazione) + ' min'));
+                    badgeTime.appendChild(document.createTextNode(tempoNum + ' min'));
                     meta.appendChild(badgeTime);
                 }
-                if (piatto.punti_fedelta) {
+                
+                // Normalize loyalty points field: support multiple field name variants
+                const punti = piatto.punti_fedelta || piatto.punti || piatto.points || piatto.loyalty_points || null;
+                const puntiNum = punti ? (typeof punti === 'number' ? punti : parseFloat(punti)) : null;
+                if (puntiNum && !isNaN(puntiNum)) {
                     const badgePunti = document.createElement('span');
                     badgePunti.className = 'badge bg-warning ms-2';
                     const iconStar = document.createElement('i');
                     iconStar.className = 'fas fa-star me-1';
                     badgePunti.appendChild(iconStar);
-                    badgePunti.appendChild(document.createTextNode(String(piatto.punti_fedelta) + ' punti'));
+                    badgePunti.appendChild(document.createTextNode(puntiNum + ' punti'));
                     meta.appendChild(badgePunti);
                 }
 
