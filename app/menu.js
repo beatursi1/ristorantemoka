@@ -840,6 +840,22 @@ function mostrareCategoriaView(macro) {
 function mostrareMenu(categorie) {
     const menu = document.getElementById('menu');
     if (!menu) return;
+    
+    // Forza vista "solo macrocategorie" quando la sessione cliente è manuale (es. sessione_cliente_id che inizia con 'man_')
+    try {
+      const sess = (parametriUrl && parametriUrl.sessione_cliente_id) || (new URLSearchParams(window.location.search)).get('sessione_cliente_id') || null;
+      if (sess && String(sess).startsWith('man_')) {
+        const macros = Array.isArray(categorie)
+          ? categorie.map(c => ({ nome: c.nome || c.titolo || 'Categoria', sottocategorie: [ c ] }))
+          : [];
+        window._menu_macros = macros;
+        mostrareMacrocategorie(window._menu_macros);
+        return;
+      }
+    } catch (e) {
+      console.warn('forzatura macrocategorie per sessione man_ fallita', e);
+    }
+    
     menu.innerHTML = '';
 
     if (!Array.isArray(categorie)) {
