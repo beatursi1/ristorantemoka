@@ -840,20 +840,6 @@ function mostrareCategoriaView(macro) {
 function mostrareMenu(categorie) {
     const menu = document.getElementById('menu');
     if (!menu) return;
-    // Forza vista "solo macrocategorie" quando la sessione cliente è manuale (es. sessione_cliente_id che inizia con 'man_')
-    try {
-      const sess = (parametriUrl && parametriUrl.sessione_cliente_id) || (new URLSearchParams(window.location.search)).get('sessione_cliente_id') || null;
-      if (sess && String(sess).startsWith('man_')) {
-        const macros = Array.isArray(categorie)
-          ? categorie.map(c => ({ nome: c.nome || c.titolo || 'Categoria', sottocategorie: [ c ] }))
-          : [];
-        window._menu_macros = macros;
-        mostrareMacrocategorie(window._menu_macros);
-        return;
-      }
-    } catch (e) {
-      console.warn('forzatura macrocategorie per sessione man_ fallita', e);
-    }
     menu.innerHTML = '';
 
     if (!Array.isArray(categorie)) {
@@ -861,42 +847,53 @@ function mostrareMenu(categorie) {
         return;
     }
 
-    // 1) Se gli elementi hanno giÃ  sottocategorie (struttura a due livelli), trattali come macrocategorie
+    // Costruiamo le macrocategorie UNA SOLA VOLTA (evitiamo assegnazioni ripetute a window._menu_macros)
+    let macros = null;
+
+    // 1) Se gli elementi hanno già sottocategorie (struttura a due livelli), trattali come macrocategorie
     const looksLikeMacros = categorie.every(c => c && (Array.isArray(c.sottocategorie) || Array.isArray(c.subcategories) || Array.isArray(c.children) || Array.isArray(c.categorie)));
     if (looksLikeMacros) {
-        window._menu_macros = categorie.slice();
-        mostrareMacrocategorie(window._menu_macros);
-        return;
+        macros = categorie.slice();
+    } else {
+        // 2) Se le categorie hanno un campo `macro` (string), raggruppa le categorie sotto le macrocategorie
+        const hasMacroField = categorie.some(c => c && typeof c.macro === 'string' && c.macro.trim().length > 0);
+        if (hasMacroField) {
+            const map = {};
+            categorie.forEach(c => {
+                const macroName = (c && c.macro) ? String(c.macro).trim() : 'Altro';
+                map[macroName] = map[macroName] || { nome: macroName, sottocategorie: [] };
+                map[macroName].sottocategorie.push(c);
+            });
+            macros = Object.keys(map).map(k => map[k]);
+        } else {
+            // 3) Fallback: lista piatta di categorie -> raggruppa sotto macro "Menu"
+            const wrapperMacro = { nome: 'Menu', sottocategorie: [] };
+            categorie.forEach(c => {
+                const sub = {
+                    nome: c.nome || c.titolo || 'Categoria',
+                    piatti: Array.isArray(c.piatti) ? c.piatti : (c.items || [])
+                };
+                wrapperMacro.sottocategorie.push(sub);
+            });
+            macros = [ wrapperMacro ];
+        }
     }
 
-    // 2) Se le categorie hanno un campo `macro` (string), raggruppa le categorie sotto le macrocategorie
-    const hasMacroField = categorie.some(c => c && typeof c.macro === 'string' && c.macro.trim().length > 0);
-    if (hasMacroField) {
-        const map = {};
-        categorie.forEach(c => {
-            const macroName = (c && c.macro) ? String(c.macro).trim() : 'Altro';
-            map[macroName] = map[macroName] || { nome: macroName, sottocategorie: [] };
-            map[macroName].sottocategorie.push(c);
-        });
-        const macros = Object.keys(map).map(k => map[k]);
+    // Imposta la variabile globale UNA SOLA VOLTA e renderizza la vista macro
+    try {
         window._menu_macros = macros;
-        mostrareMacrocategorie(macros);
-        return;
+        if (typeof mostrareMacrocategorie === 'function') {
+            mostrareMacrocategorie(macros);
+        } else {
+            // difensivo: se la funzione non è ancora definita, mostra qualcosa di sensato
+            menu.innerHTML = '<div class="alert alert-info">Menu pronto — attendere caricamento renderer...</div>';
+            // opzionale: altre strategie fallback qui (MutationObserver, setInterval, ecc.)
+        }
+    } catch (e) {
+        console.warn('Errore preparing macros view', e);
+        // fallback: mostra le categorie in forma semplice
+        menu.innerHTML = '<div class="alert alert-warning">Impossibile mostrare la vista macrocategorie</div>';
     }
-
-    // 3) Fallback: se i dati sono una lista piatta di categorie con piatti (vecchio comportamento),
-    //    mostriamo direttamente le categorie come se fossero sottocategorie di una macro "Menu".
-    const wrapperMacro = { nome: 'Menu', sottocategorie: [] };
-    categorie.forEach(c => {
-        // converti categoria in sottocategoria shape
-        const sub = {
-            nome: c.nome || c.titolo || 'Categoria',
-            piatti: Array.isArray(c.piatti) ? c.piatti : (c.items || [])
-        };
-        wrapperMacro.sottocategorie.push(sub);
-    });
-    window._menu_macros = [ wrapperMacro ];
-    mostrareMacrocategorie(window._menu_macros);
 }
 // ---------- Fine nuovo sistema ----------
 
@@ -1515,3 +1512,4 @@ document.head.appendChild(style);
     console.warn('aria-hidden observer init failed', e);
   }
 })();
+
