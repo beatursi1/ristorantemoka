@@ -1,5 +1,5 @@
 <?php
-// menu.php
+// api/menu/menu.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); // Permette chiamate da qualsiasi dominio (per testing)
 header('Access-Control-Allow-Methods: GET');
@@ -11,82 +11,177 @@ $conn = getDbConnection();
 
 if (!$conn) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed']);
+    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
     exit;
 }
 
 try {
-    // Query per ottenere categorie con piatti
-    $query = "
-        SELECT 
-            c.id as categoria_id,
-            c.nome as categoria_nome,
-            c.ordine as categoria_ordine,
-            p.id as piatto_id,
-            p.nome as piatto_nome,
+    // 1) Leggiamo tutte le categorie visibili
+    $sqlCategorie = "
+        SELECT
+            c.id,
+            c.nome,
+            c.ordine
+        FROM categorie_menu c
+        WHERE c.visibile = TRUE
+        ORDER BY c.ordine
+    ";
+
+    $resCat = $conn->query($sqlCategorie);
+    if (!$resCat) {
+        throw new Exception("Query categorie failed: " . $conn->error);
+    }
+
+    $menu = [];
+    while ($row = $resCat->fetch_assoc()) {
+        $catId = (int)$row['id'];
+        $menu[$catId] = [
+            'id' => $catId,
+            'nome' => $row['nome'],
+            'ordine' => (int)$row['ordine'],
+            'piatti' => [],          // piatti SENZA sottocategoria
+            'sottocategorie' => []   // sottocategorie con relativi piatti
+        ];
+    }
+
+    // Se non ci sono categorie, restituiamo subito
+    if (empty($menu)) {
+        $response = [
+            'success' => true,
+            'data' => [],
+            'timestamp' => date('Y-m-d H:i:s'),
+            'count_categorie' => 0,
+            'count_piatti_totali' => 0
+        ];
+        echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // 2) Leggiamo le sottocategorie per le categorie trovate
+    $catIds = array_keys($menu);
+    $inCat = implode(',', array_map('intval', $catIds));
+
+    $sqlSottocategorie = "
+        SELECT
+            s.id,
+            s.categoria_id,
+            s.nome,
+            s.ordine,
+            s.visibile
+        FROM sottocategorie s
+        WHERE s.categoria_id IN ($inCat)
+        ORDER BY s.categoria_id, s.ordine, s.nome
+    ";
+
+    $resSub = $conn->query($sqlSottocategorie);
+    if (!$resSub) {
+        throw new Exception("Query sottocategorie failed: " . $conn->error);
+    }
+
+    // Mappa delle sottocategorie per categoria
+    // $menu[catId]['sottocategorie'][subId] = [ ... ]
+    while ($row = $resSub->fetch_assoc()) {
+        $catId = (int)$row['categoria_id'];
+        $subId = (int)$row['id'];
+
+        if (!isset($menu[$catId])) {
+            continue; // categoria non visibile o inconsistente
+        }
+
+        if (!isset($menu[$catId]['sottocategorie'])) {
+            $menu[$catId]['sottocategorie'] = [];
+        }
+
+        $menu[$catId]['sottocategorie'][$subId] = [
+            'id' => $subId,
+            'nome' => $row['nome'],
+            'ordine' => (int)$row['ordine'],
+            'visibile' => (int)$row['visibile'],
+            'piatti' => []
+        ];
+    }
+
+    // 3) Leggiamo tutti i piatti disponibili per le categorie
+    //    ORDINATI per categoria, sottocategoria, ordine piatto, nome
+    $sqlPiatti = "
+        SELECT
+            p.id,
+            p.categoria_id,
+            p.sottocategoria_id,
+            p.nome,
             p.descrizione,
             p.prezzo,
+            p.ordine,
             p.immagine,
             p.tempo_preparazione,
             p.punti_fedelta,
+            p.allergeni,
             p.disponibile
-        FROM categorie_menu c
-        LEFT JOIN piatti p ON c.id = p.categoria_id
-        WHERE c.visibile = TRUE 
-        AND (p.disponibile = TRUE OR p.id IS NULL)
-        ORDER BY c.ordine, p.nome
+        FROM piatti p
+        WHERE p.categoria_id IN ($inCat)
+          AND p.disponibile = TRUE
+        ORDER BY
+            p.categoria_id,
+            p.sottocategoria_id,
+            p.ordine,
+            p.nome
     ";
-    
-    $result = $conn->query($query);
-    
-    if (!$result) {
-        throw new Exception("Query failed: " . $conn->error);
+
+    $resPiatti = $conn->query($sqlPiatti);
+    if (!$resPiatti) {
+        throw new Exception("Query piatti failed: " . $conn->error);
     }
-    
-    $menu = [];
-    $current_category = null;
-    
-    while ($row = $result->fetch_assoc()) {
-        $cat_id = $row['categoria_id'];
-        
-        // Se è una nuova categoria
-        if (!isset($menu[$cat_id])) {
-            $menu[$cat_id] = [
-                'id' => $cat_id,
-                'nome' => $row['categoria_nome'],
-                'ordine' => $row['categoria_ordine'],
-                'piatti' => []
-            ];
+
+    $countPiatti = 0;
+
+    while ($row = $resPiatti->fetch_assoc()) {
+        $catId = (int)$row['categoria_id'];
+        if (!isset($menu[$catId])) {
+            continue; // categoria non visibile o inconsistente
         }
-        
-        // Aggiungi piatto se esiste (LEFT JOIN potrebbe restituire NULL per piatti)
-        if ($row['piatto_id']) {
-            $menu[$cat_id]['piatti'][] = [
-                'id' => $row['piatto_id'],
-                'nome' => $row['piatto_nome'],
-                'descrizione' => $row['descrizione'],
-                'prezzo' => (float)$row['prezzo'],
-                'prezzo_formattato' => '€' . number_format($row['prezzo'], 2, ',', '.'),
-                'tempo_preparazione' => (int)$row['tempo_preparazione'],
-                'punti_fedelta' => (int)$row['punti_fedelta'],
-                'immagine' => $row['immagine']
-            ];
+
+        $piatto = [
+            'id' => (int)$row['id'],
+            'nome' => $row['nome'],
+            'descrizione' => $row['descrizione'],
+            'prezzo' => (float)$row['prezzo'],
+            'prezzo_formattato' => '€' . number_format($row['prezzo'], 2, ',', '.'),
+            'tempo_preparazione' => $row['tempo_preparazione'] !== null ? (int)$row['tempo_preparazione'] : null,
+            'punti_fedelta' => $row['punti_fedelta'] !== null ? (int)$row['punti_fedelta'] : 0,
+            'immagine' => $row['immagine'],
+            'allergeni' => $row['allergeni'],
+            'ordine' => $row['ordine'] !== null ? (int)$row['ordine'] : 0
+        ];
+
+        $countPiatti++;
+
+        $subId = $row['sottocategoria_id'] !== null ? (int)$row['sottocategoria_id'] : null;
+
+        if ($subId !== null && isset($menu[$catId]['sottocategorie'][$subId])) {
+            $menu[$catId]['sottocategorie'][$subId]['piatti'][] = $piatto;
+        } else {
+            $menu[$catId]['piatti'][] = $piatto;
         }
     }
-    
-    // Converti array associativo in array numerico per JSON
+
+    // 4) Convertiamo sottocategorie da array associativo (per id) a array numerico
+    foreach ($menu as $catId => $catData) {
+        if (!empty($catData['sottocategorie']) && is_array($catData['sottocategorie'])) {
+            $menu[$catId]['sottocategorie'] = array_values($catData['sottocategorie']);
+        }
+    }
+
+    // 5) Converti array associativo di categorie in array numerico
     $menu_array = array_values($menu);
-    
+
     $response = [
         'success' => true,
         'data' => $menu_array,
         'timestamp' => date('Y-m-d H:i:s'),
         'count_categorie' => count($menu_array),
-        'count_piatti_totali' => array_sum(array_map(function($cat) {
-            return count($cat['piatti']);
-        }, $menu_array))
+        'count_piatti_totali' => $countPiatti
     ];
-    
+
 } catch (Exception $e) {
     http_response_code(500);
     $response = [
@@ -98,4 +193,3 @@ try {
 
 $conn->close();
 echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-?>
