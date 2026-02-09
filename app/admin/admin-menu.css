@@ -1,0 +1,109 @@
+/* Container principale area admin */
+.admin-container {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 15px 40px 15px;
+}
+
+/* Card categoria */
+.categoria-card {
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e5e5;
+}
+
+/* Header categoria */
+.categoria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.badge-categoria {
+  background-color: #0d6efd;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+}
+
+/* Piatti */
+.piatto-riga {
+  padding: 10px 0;
+  border-top: 1px dashed #ddd;
+}
+
+.piatto-riga:first-of-type {
+  border-top: none;
+}
+
+.piatto-nome {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.piatto-descrizione {
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.piatto-meta {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+.piatto-prezzo {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.piatto-punti {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+/* Alert in alto */
+#admin-alert {
+  margin-bottom: 20px;
+}
+
+/* Pulsanti admin più compatti */
+.categoria-header .btn-group .btn,
+.piatto-riga .btn-group .btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.35rem;
+}
+
+/* Modale modifica piatto */
+#modalModificaPiatto .modal-body textarea {
+  resize: vertical;
+}
+
+/* Form aggiungi piatto */
+#form-aggiungi-piatto .form-text {
+  font-size: 0.8rem;
+}
+
+/* Pulsanti freccia (categorie, sottocategorie, piatti) */
+.btn-move {
+  background-color: #0d6efd !important;  /* blu bootstrap */
+  color: #ffffff !important;
+  border-color: #0d6efd !important;
+  padding-inline: 0.45rem;
+  padding-block: 0.2rem;
+}
+
+.btn-move i {
+  color: inherit;
+}
+
+.btn-move:hover,
+.btn-move:focus {
+  background-color: #0b5ed7 !important;
+  border-color: #0b5ed7 !important;
+  color: #ffffff !important;
+}

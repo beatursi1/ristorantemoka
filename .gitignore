@@ -36,3 +36,10 @@ logs/
 
 # Ignore production config
 /config/config.php
+
+# Backup files (keep existing .bak for history, but ignore new ones)
+*.bak.new
+*.backup
+
+# Local development scripts (PowerShell)
+# Note: existing .ps1 scripts are kept for documentation purposes
