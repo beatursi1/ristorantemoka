@@ -1,11 +1,10 @@
-//menu-categoria.html
 <!doctype html>
 <html lang="it">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Menu — Categoria</title>
-  <link rel="stylesheet" href="./app/menu.css" />
+  <link rel="stylesheet" href="menu.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
   <!-- Assumiamo che app/menu.js sia presente e fornisca mostrareCategoriaView e mostrareMacrocategorie -->
@@ -19,7 +18,7 @@
 <body>
   <div class="container">
     <div id="topbar" class="d-flex align-items-center mb-3">
-      <a href="./app/menu.html" id="btn-back-to-menu" class="btn btn-outline-secondary btn-sm me-3">
+      <a href="menu.html" id="btn-back-to-menu" class="btn btn-outline-secondary btn-sm me-3">
         <i class="fas fa-arrow-left me-1"></i> Torna al Menu
       </a>
       <h4 id="page-title" style="margin:0;">Categoria</h4>
@@ -54,33 +53,59 @@
         }
       }
 
-      // Ricostruisce la struttura "macrocategorie" seguendo la stessa logica di app/menu.js
+      // Adattiamo la struttura così com'è restituita da api/menu/menu.php
+      // Ogni elemento di "categories" è:
+      // {
+      //   id, nome, ordine,
+      //   piatti: [ ... piatti SENZA sottocategoria ... ],
+      //   sottocategorie: [
+      //     { id, nome, ordine, visibile, piatti: [ ... ] },
+      //     ...
+      //   ]
+      // }
       function buildMacrosFrom(categories) {
         if (!Array.isArray(categories)) return [];
-        const looksLikeMacros = categories.every(c => c && (Array.isArray(c.sottocategorie) || Array.isArray(c.subcategories) || Array.isArray(c.children) || Array.isArray(c.categorie)));
-        if (looksLikeMacros) return categories.slice();
 
-        const hasMacroField = categories.some(c => c && typeof c.macro === 'string' && c.macro.trim().length > 0);
-        if (hasMacroField) {
-          const map = {};
-          categories.forEach(c => {
-            const macroName = (c && c.macro) ? String(c.macro).trim() : 'Altro';
-            map[macroName] = map[macroName] || { nome: macroName, sottocategorie: [] };
-            map[macroName].sottocategorie.push(c);
-          });
-          return Object.keys(map).map(k => map[k]);
-        }
+        return categories.map(c => {
+          const macroNome = c.nome || c.titolo || 'Categoria';
 
-        // Fallback: raggruppa tutte le categorie sotto un unico macro "Menu"
-        const wrapperMacro = { nome: 'Menu', sottocategorie: [] };
-        categories.forEach(c => {
-          const sub = {
-            nome: c.nome || c.titolo || 'Categoria',
-            piatti: Array.isArray(c.piatti) ? c.piatti : (c.items || [])
+          // Partiamo dalle sottocategorie REALI, se esistono
+          let sottocategorie = [];
+
+          if (Array.isArray(c.sottocategorie) && c.sottocategorie.length) {
+            sottocategorie = c.sottocategorie
+              // tieni solo quelle visibili o senza flag
+              .filter(sub => sub.visibile === undefined || sub.visibile === null || sub.visibile === 1 || sub.visibile === '1')
+              // ordina per ordine e nome
+              .slice()
+              .sort((a, b) => {
+                const oa = parseInt(a.ordine || 0, 10) || 0;
+                const ob = parseInt(b.ordine || 0, 10) || 0;
+                if (oa !== ob) return oa - ob;
+                return (a.nome || '').localeCompare(b.nome || '');
+              })
+              .map(sub => ({
+                nome: sub.nome || 'Sottocategoria',
+                piatti: Array.isArray(sub.piatti) ? sub.piatti : []
+              }));
+          }
+
+          // Se esistono piatti SENZA sottocategoria (c.piatti),
+          // possiamo opzionalmente considerarli come una sottocategoria "Generale" in testa.
+          const piattiSenzaSub = Array.isArray(c.piatti) ? c.piatti : [];
+
+          if (piattiSenzaSub.length) {
+            sottocategorie.unshift({
+              nome: macroNome, // o "Tutti", "Generale", ecc.
+              piatti: piattiSenzaSub
+            });
+          }
+
+          return {
+            nome: macroNome,
+            sottocategorie
           };
-          wrapperMacro.sottocategorie.push(sub);
         });
-        return [ wrapperMacro ];
       }
 
       async function init() {
@@ -106,44 +131,117 @@
             if (typeof mostrareCategoriaView === 'function') {
               mostrareCategoriaView(found);
             } else {
-              // fallback: render semplice
+              // fallback: render categorie e piatti con layout simile a menu.html
               const cont = document.getElementById('menu');
               cont.innerHTML = '';
+
               const card = document.createElement('div');
-              card.className = 'card';
+              card.className = 'card mb-4';
+
               const header = document.createElement('div');
               header.className = 'card-header';
               header.textContent = found.nome || found.titolo || 'Categoria';
               card.appendChild(header);
+
               const body = document.createElement('div');
               body.className = 'card-body';
+
               if (Array.isArray(found.sottocategorie)) {
                 found.sottocategorie.forEach(sub => {
                   const s = document.createElement('div');
-                  s.className = 'mb-3';
-                  const h = document.createElement('h6');
+                  s.className = 'mb-4';
+
+                  const h = document.createElement('h5');
+                  h.className = 'mb-3';
                   h.textContent = sub.nome || sub.titolo || 'Sottocategoria';
                   s.appendChild(h);
+
                   if (Array.isArray(sub.piatti) && sub.piatti.length) {
-                    const ul = document.createElement('div');
+                    const list = document.createElement('div');
+                    list.className = 'list-group';
+
                     sub.piatti.forEach(p => {
-                      const el = document.createElement('div');
-                      el.className = 'piatto-item';
-                      el.textContent = p.nome || p.titolo || 'Piatto';
-                      ul.appendChild(el);
+                      const item = document.createElement('div');
+                      item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                      const left = document.createElement('div');
+
+                      const nome = document.createElement('div');
+                      nome.className = 'fw-bold';
+                      nome.textContent = p.nome || p.titolo || 'Piatto';
+                      left.appendChild(nome);
+
+                      if (p.descrizione) {
+                        const desc = document.createElement('div');
+                        desc.className = 'text-muted small';
+                        desc.textContent = p.descrizione;
+                        left.appendChild(desc);
+                      }
+
+                      // Riga con tempo di preparazione e punti fedeltà
+                      const meta = document.createElement('div');
+                      meta.className = 'mt-1 small';
+                      const tempo = (typeof p.tempo_preparazione === 'number')
+                        ? p.tempo_preparazione + ' min'
+                        : '';
+                      const punti = (typeof p.punti_fedelta === 'number')
+                        ? p.punti_fedelta + ' punti'
+                        : '';
+                      const parts = [tempo, punti].filter(Boolean);
+                      if (parts.length) {
+                        if (tempo) {
+                          const tempoBadge = document.createElement('span');
+                          tempoBadge.className = 'meta-badge-tempo me-2';
+                          tempoBadge.textContent = tempo;
+                          meta.appendChild(tempoBadge);
+                        }
+
+                        if (punti) {
+                          const puntiBadge = document.createElement('span');
+                          puntiBadge.className = 'meta-badge-punti';
+                          puntiBadge.textContent = punti;
+                          meta.appendChild(puntiBadge);
+                        }
+
+                        left.appendChild(meta);
+                      }
+
+                      item.appendChild(left);
+
+                      const right = document.createElement('div');
+                      right.className = 'text-end';
+
+                      const prezzo = document.createElement('div');
+                      prezzo.className = 'fw-semibold';
+                      prezzo.textContent = p.prezzo_formattato || (p.prezzo != null ? ('€' + p.prezzo.toFixed(2)) : '');
+                      right.appendChild(prezzo);
+
+                      const btn = document.createElement('button');
+                      btn.className = 'btn btn-ordina btn-sm mt-2';
+                      btn.type = 'button';
+                      btn.setAttribute('aria-label', 'Aggiungi ' + (p.nome || 'piatto'));
+                      btn.innerHTML = '<i class="fas fa-plus me-1"></i>Aggiungi';
+                      // Qui in futuro potremo collegare il bottone al carrello
+                      right.appendChild(btn);
+
+                      item.appendChild(right);
+                      list.appendChild(item);
                     });
-                    s.appendChild(ul);
+
+                    s.appendChild(list);
                   } else {
                     const none = document.createElement('div');
                     none.className = 'text-muted';
                     none.textContent = 'Nessun piatto in questa sottocategoria';
                     s.appendChild(none);
                   }
+
                   body.appendChild(s);
                 });
               } else {
                 body.innerHTML = '<div class="text-muted">Nessuna sottocategoria disponibile</div>';
               }
+
               card.appendChild(body);
               cont.appendChild(card);
             }

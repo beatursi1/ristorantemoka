@@ -257,5 +257,25 @@ button { display: block; margin: 10px 0; padding: 10px; width: 100%; }
   .menu-page .mm-macro-btn .icon { width:64px; height:64px; border-radius:14px; font-size:1.3rem; }
   .menu-page .mm-macro-btn .label { font-size:1.1rem; }
 }
+/* Badge per tempo di preparazione e punti fedeltà nella pagina categoria */
+.meta-badge-tempo,
+.meta-badge-punti {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin-right: 6px; /* spazio orizzontale tra i badge */
+}
 
+/* tempo di preparazione: marroncino */
+.meta-badge-tempo {
+  background-color: #8d6e63; /* marrone chiaro */
+  color: #ffffff;
+}
+
+/* punti fedeltà: giallino */
+.meta-badge-punti {
+  background-color: #ffeb3b; /* giallo */
+  color: #333333;
+}
 /* fine file */
