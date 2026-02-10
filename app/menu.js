@@ -10,7 +10,7 @@ try {
     set: function(v) { carrello = v; }
   });
 } catch (e) {
-  // se defineProperty non ÃƒÂ¨ permesso, cade back al valore semplice (meno ideale ma compatibile)
+  // se defineProperty non è permesso, cade back al valore semplice (meno ideale ma compatibile)
   window.carrello = carrello;
 }
 
@@ -20,14 +20,14 @@ window.arrivaDaCameriere = false; // <<< AGGIUNTA: flag globale
 if (window.EventDelegator && typeof window.EventDelegator.init === 'function') {
   try { window.EventDelegator.init(); } catch (e) { console.error('EventDelegator.init error', e); }
 } else {
-  // Se menu-events.js verrÃƒÂ  caricato dopo menu.js, segnaliamo che l'init ÃƒÂ¨ pendente:
+  // Se menu-events.js verrà caricato dopo menu.js, segnaliamo che l'init è pendente:
   window._menu_events_init_pending = true;
 }
 // Modals logic moved to menu-modals.js
 if (window.MenuModals && typeof window.MenuModals.init === 'function') {
   try { window.MenuModals.init(); } catch (e) { console.error('MenuModals.init error', e); }
 } else {
-  // Se menu-modals.js verrÃƒÂ  caricato dopo menu.js, segnaliamo che l'init ÃƒÂ¨ pendente:
+  // Se menu-modals.js verrà caricato dopo menu.js, segnaliamo che l'init è pendente:
   window._menu_modals_init_pending = true;
 }
 // Legge parametri dalla URL e registra automaticamente il cliente
@@ -47,15 +47,15 @@ async function leggereParametriUrl() {
         sessione: sessioneToken || null,
         tavolo: tavoloParam || null,
         cliente: null,
-        session_id: null,             // compatibilitÃƒÂ  interna (vecchio nome)
+        session_id: null,             // compatibilità interna (vecchio nome)
         sessione_cliente_id: sessioneClienteId || null, // nuovo campo esplicito dal parametro URL
         tavolo_numero: null
     };
-    // Se arrivo dal cameriere con un cliente giÃƒÂ  noto (cliente + sessione_cliente_id),
+    // Se arrivo dal cameriere con un cliente già noto (cliente + sessione_cliente_id),
     // imposto direttamente questi parametri e salto la registrazione automatica.
     if (clienteDaCameriere && sessioneClienteId) {
         parametriUrl.cliente = clienteDaCameriere;
-        parametriUrl.session_id = sessioneClienteId;            // compatibilitÃƒÂ  interna
+        parametriUrl.session_id = sessioneClienteId;            // compatibilità interna
         parametriUrl.sessione_cliente_id = sessioneClienteId;   // nuovo campo esplicito
 
         // Aggiorna subito la UI cliente corrente
@@ -119,7 +119,7 @@ async function leggereParametriUrl() {
         chiaveStorage = 'cliente_tavolo_' + parametriUrl.tavolo;
     }
 
-    // 1) Se abbiamo giÃƒÂ  un cliente precompilato dal cameriere (cliente + sessione_cliente_id),
+    // 1) Se abbiamo già un cliente precompilato dal cameriere (cliente + sessione_cliente_id),
     //    usiamo quello e salviamo in localStorage, poi usciamo.
         if (parametriUrl._cliente_prefill && chiaveStorage) {
         const dati = parametriUrl._cliente_prefill;
@@ -235,7 +235,7 @@ window.risolviNomeClienteAutomatico = async function() {
     const letter = (parametriUrl && parametriUrl.cliente) || qs.get('cliente') || (saved && saved.lettera) || null;
     if (!letter) return;
 
-    // Se abbiamo giÃƒÂ  il nome, aggiorna UI e esci
+    // Se abbiamo già il nome, aggiorna UI e esci
     if (saved && saved.nome) {
       try { if (document.getElementById('cliente-corrente-nome')) document.getElementById('cliente-corrente-nome').textContent = saved.nome; } catch(e){}
       return;
@@ -320,7 +320,7 @@ async function registraClienteAutomaticamente(chiaveStorage) {
         
         if (data.success) {
             parametriUrl.cliente = data.lettera;
-            parametriUrl.session_id = data.session_id || null;              // compatibilitÃƒÂ  interna
+            parametriUrl.session_id = data.session_id || null;              // compatibilità interna
             parametriUrl.sessione_cliente_id = data.session_id || null;     // nuovo campo esplicito
 
             try { document.getElementById('cliente-corrente').textContent = data.lettera; } catch(e){}
@@ -429,7 +429,7 @@ function inizializzareUI() {
         // Carica ordini precedenti
         try { caricareOrdiniPrecedenti(); } catch(e){}
 
-        // Assicura presenza di un pulsante unico "Ordina bevande" nella header se la categoria Bevande non ÃƒÂ¨ mostrata
+        // Assicura presenza di un pulsante unico "Ordina bevande" nella header se la categoria Bevande non è mostrata
         try {
                     if (!document.getElementById('btn-apri-bevande-unico')) {
                 const headerRow = document.querySelector('.header .container .row .col-8') || document.querySelector('.header .container .row');
@@ -444,7 +444,7 @@ function inizializzareUI() {
                     btn.type = 'button';
                     btn.className = 'btn btn-outline-primary btn-sm';
                     btn.textContent = 'Ordina bevande';
-                    // binding idempotente: evita duplicati se il codice viene eseguito piÃƒÂ¹ volte
+                    // binding idempotente: evita duplicati se il codice viene eseguito più volte
                     if (!btn.dataset.boundClick) {
                         btn.addEventListener('click', () => { try { apriModalBevande(); } catch(e) { console.error('Errore apriModalBevande', e); } });
                         btn.dataset.boundClick = '1';
@@ -540,15 +540,15 @@ function setupPulsanteBevande() {
     categorie.forEach(categoria => {
         const header = categoria.querySelector('.card-header');
         if (header && (header.textContent.includes('Bevande') || header.textContent.includes('bevande'))) {
-            // Controlla se il pulsante esiste giÃƒÂ 
+            // Controlla se il pulsante esiste già
             const existingButton = categoria.querySelector('.btn-aggiungi-bevande');
             if (existingButton) {
-                // Se esiste giÃƒÂ , rimuovilo per evitare duplicati
+                // Se esiste già, rimuovilo per evitare duplicati
                 existingButton.parentNode.remove();
             }
             
                         // Aggiungi pulsante per aggiungere bevande
-            // Il pulsante "Aggiungi altre bevande" ÃƒÂ¨ stato rimosso intenzionalmente per evitare
+            // Il pulsante "Aggiungi altre bevande" è stato rimosso intenzionalmente per evitare
             // conflitti/avvisi ARIA. Se in futuro vuoi riattivarlo, reinserisci qui un button che
             // chiami apriModalBevande(), oppure usa la funzione restore preventiva dell'app.
             // (Nessun elemento viene inserito in questa posizione.)
@@ -584,7 +584,7 @@ function creaElementoPiatto(piatto) {
     const prezzoSpan = document.createElement('span');
     prezzoSpan.className = 'text-success fw-bold';
     const prezzoVal = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
-    prezzoSpan.textContent = `Ã¢â€šÂ¬${prezzoVal.toFixed(2)}`;
+    prezzoSpan.textContent = `€${prezzoVal.toFixed(2)}`;
     meta.appendChild(prezzoSpan);
 
     if (piatto.tempo_preparazione) {
@@ -764,7 +764,7 @@ function mostrareMacrocategorie(macros) {
 
 /*
   Mostra la vista per una singola macro: elenca le sottocategorie e le relative pietanze
-  macro: oggetto con proprietÃƒÂ  sottocategorie (array) o categories (array) o children
+  macro: oggetto con proprietà sottocategorie (array) o categories (array) o children
 */
 function mostrareCategoriaView(macro) {
     const menu = document.getElementById('menu');
@@ -834,8 +834,8 @@ function mostrareCategoriaView(macro) {
 }
 
 /*
-  Wrapper intelligente: decide se la risposta API ÃƒÂ¨ giÃƒÂ  macrocategorie oppure se raggruppare per campo `macro`.
-  Accetta la stessa struttura che aveva `mostrareMenu` prima (compatibilitÃƒÂ ).
+  Wrapper intelligente: decide se la risposta API è già macrocategorie oppure se raggruppare per campo `macro`.
+  Accetta la stessa struttura che aveva `mostrareMenu` prima (compatibilità).
 */
 function mostrareMenu(categorie) {
     const menu = document.getElementById('menu');
@@ -980,7 +980,7 @@ function aggiornareCarrelloUI() {
 
             const prezzoEl = document.createElement('span');
             prezzoEl.className = 'fw-bold me-3';
-            prezzoEl.textContent = 'Ã¢â€šÂ¬' + Number(item.prezzo).toFixed(2);
+            prezzoEl.textContent = '€' + Number(item.prezzo).toFixed(2);
             right.appendChild(prezzoEl);
 
             const btnRimuovi = document.createElement('button');
@@ -1051,7 +1051,7 @@ return String(str)
 // ================= GESTIONE BEVANDE =================
 function apriModalBevande() {
     try {
-        // Se il modal non ÃƒÂ¨ presente nel DOM, ripristiniamolo dal template (se esiste).
+        // Se il modal non è presente nel DOM, ripristiniamolo dal template (se esiste).
         let modalEl = document.getElementById('modal-bevande');
         if (!modalEl) {
             const tmpl = document.getElementById('tmpl-modal-bevande');
@@ -1071,7 +1071,7 @@ function apriModalBevande() {
         // Bind minimi e idempotenti se non ancora applicati
         try {
             if (!modalEl.dataset.boundBevande) {
-                // shown handler: imposteremo preselect / popolamento e focus in modo sicuro piÃƒÂ¹ sotto
+                // shown handler: imposteremo preselect / popolamento e focus in modo sicuro più sotto
                 modalEl.addEventListener('shown.bs.modal', async () => {
                     try {
                         // Assicuriamoci che parametriUrl sia presente
@@ -1173,7 +1173,7 @@ function apriModalBevande() {
                     });
                 } catch(e){ /* ignore */ }
 
-                // Prima che il modal venga nascosto, se un discendente ÃƒÂ¨ attualmente focalizzato,
+                // Prima che il modal venga nascosto, se un discendente è attualmente focalizzato,
                 // spostiamo il focus fuori (body) per evitare che aria-hidden venga bloccato.
                 try {
                     if (!modalEl.dataset.boundHideFocus) {
@@ -1196,11 +1196,11 @@ function apriModalBevande() {
             console.warn('apriModalBevande: errore durante il binding dei listener:', e);
         }
 
-        // Prima di mostrare: rimuoviamo il focus da qualsiasi elemento attivo (specialmente se ÃƒÂ¨ dentro il modal)
+        // Prima di mostrare: rimuoviamo il focus da qualsiasi elemento attivo (specialmente se è dentro il modal)
         try {
             const active = document.activeElement;
             if (active) {
-                // se il focus ÃƒÂ¨ dentro il modal o comunque potrebbe restare su un elemento che poi sarÃƒÂ  nascosto,
+                // se il focus è dentro il modal o comunque potrebbe restare su un elemento che poi sarà nascosto,
                 // blur immediatamente; requestAnimationFrame per lasciare al browser il tempo di processare.
                 try { if (active && (modalEl.contains(active) || active.matches && active.matches('#modal-bevande *'))) active.blur(); } catch(e){ try { active.blur(); } catch(e){} }
             }
@@ -1225,8 +1225,8 @@ function aggiungiBevandaAlCarrello() {
     const bevandaTesto = select.options[select.selectedIndex].text;
     
     // Estrai nome e prezzo
-    const matchNome = bevandaTesto.match(/^([^-Ã¢â€šÂ¬]+)/);
-    const matchPrezzo = bevandaTesto.match(/Ã¢â€šÂ¬(\d+\.?\d*)/);
+    const matchNome = bevandaTesto.match(/^([^-€]+)/);
+    const matchPrezzo = bevandaTesto.match(/€(\d+\.?\d*)/);
     
     const nomeBevanda = matchNome ? matchNome[0].trim() : bevandaTesto;
     const prezzoBevanda = matchPrezzo ? parseFloat(matchPrezzo[1]) : 0;
@@ -1269,11 +1269,11 @@ function aggiungiBevandaAlCarrello() {
         if (active && modalEl && modalEl.contains(active)) {
             try { active.blur(); } catch (e) { /* ignore */ }
             // garantiamo che il browser abbia applicato il blur prima di chiamare hide()
-            // una breve micro-wait riduce la probabilitÃƒÂ  che bootstrap imposti aria-hidden
+            // una breve micro-wait riduce la probabilità che bootstrap imposti aria-hidden
         }
     } catch (e) { /* ignore safe */ }
 
-    // Chiudi modal (con un micro-delay per essere piÃƒÂ¹ sicuri che il blur sia stato processato)
+    // Chiudi modal (con un micro-delay per essere più sicuri che il blur sia stato processato)
     try {
         const modalEl = document.getElementById('modal-bevande');
         const instance = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
@@ -1293,7 +1293,7 @@ function aggiungiBevandaAlCarrello() {
 // ================= INVIO ORDINE =================
 async function inviaOrdine() {
     if (carrello.length === 0) {
-        alert('Il carrello ÃƒÂ¨ vuoto!');
+        alert('Il carrello è vuoto!');
         return;
     }
     
@@ -1306,11 +1306,11 @@ async function inviaOrdine() {
     let riepilogo = 'RIEPILOGO ORDINE:\n\n';
     
     carrello.forEach(item => {
-        riepilogo += `Ã¢â‚¬Â¢ ${item.nome}: Ã¢â€šÂ¬${item.prezzo.toFixed(2)}\n`;
+        riepilogo += `• ${item.nome}: €${item.prezzo.toFixed(2)}\n`;
     });
     
     const totale = carrello.reduce((sum, item) => sum + item.prezzo, 0);
-    riepilogo += `\nTOTALE: Ã¢â€šÂ¬${totale.toFixed(2)}`;
+    riepilogo += `\nTOTALE: €${totale.toFixed(2)}`;
     
     if (!confirm(riepilogo + '\n\nConfermi l\'invio dell\'ordine alla cucina?')) {
         return;
@@ -1320,7 +1320,7 @@ async function inviaOrdine() {
     const btnInvia = document.getElementById('btn-invia-ordine');
     let prevHtml = null;
     if (btnInvia) {
-        if (btnInvia.disabled) return; // giÃƒÂ  in invio
+        if (btnInvia.disabled) return; // già in invio
         prevHtml = btnInvia.innerHTML;
         btnInvia.disabled = true;
         btnInvia.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Invio...';
@@ -1361,7 +1361,7 @@ if (!parametriUrl.sessione_id) {
 // Prima creiamo l'array ordine separatamente per poterlo verificare
 let sourceCart = [];
 try {
-  // Chiediamo prima alle API "dedicate" ma useremo il risultato solo se non ÃƒÂ¨ vuoto.
+  // Chiediamo prima alle API "dedicate" ma useremo il risultato solo se non è vuoto.
   if (typeof getCarrello === 'function') {
     sourceCart = getCarrello() || [];
   } else if (window.AppState && typeof window.AppState.getCarrello === 'function') {
@@ -1394,7 +1394,7 @@ const ordine = (Array.isArray(sourceCart) ? sourceCart : []).map(item => ({
 
 // Se non ci sono articoli, blocchiamo l'invio immediatamente
 if (!Array.isArray(ordine) || ordine.length === 0) {
-    alert('Il carrello ÃƒÂ¨ vuoto. Aggiungi almeno un articolo prima di inviare.');
+    alert('Il carrello è vuoto. Aggiungi almeno un articolo prima di inviare.');
     // Se il pulsante era stato disabilitato, riabilitiamolo e ripristiniamone il testo
     if (typeof btnInvia !== 'undefined' && btnInvia) {
         btnInvia.disabled = false;
@@ -1406,12 +1406,12 @@ if (!Array.isArray(ordine) || ordine.length === 0) {
 const ordineData = {
     // sessione_id richiesto dal server: preferiamo parametriUrl.sessione_id risolto
     sessione_id: parametriUrl.sessione_id || parametriUrl.sessione_cliente_id || parametriUrl.session_id || null,
-    // session_id forzato numerico se possibile (compatibilitÃƒÂ )
+    // session_id forzato numerico se possibile (compatibilità)
     session_id: (typeof parametriUrl.sessione_id === 'number' && !isNaN(parametriUrl.sessione_id))
                 ? parametriUrl.sessione_id
                 : (parametriUrl.sessione_id ? Number(parametriUrl.sessione_id) : (parametriUrl.session_id && !isNaN(Number(parametriUrl.session_id)) ? Number(parametriUrl.session_id) : null)),
     sessione_cliente_id: parametriUrl.sessione_cliente_id || parametriUrl.session_id || null,
-    // reincludiamo il token nel body perchÃƒÂ© l'API sembra ancora richiederlo
+    // reincludiamo il token nel body perché l'API sembra ancora richiederlo
     sessione_token: parametriUrl.sessione || null,
     tavolo_id: parametriUrl.tavolo ? parseInt(parametriUrl.tavolo) : null,
     ordine: ordine
@@ -1486,7 +1486,7 @@ document.head.appendChild(style);
             if (String(val) !== 'true') return;
             const active = document.activeElement;
             if (!active) return;
-            // se l'elemento attivo ÃƒÂ¨ dentro il target (o ÃƒÂ¨ il target), rimuoviamo focus
+            // se l'elemento attivo è dentro il target (o è il target), rimuoviamo focus
             if (target.contains(active)) {
               try {
                 // prima blur diretto
