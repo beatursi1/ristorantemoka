@@ -3,257 +3,422 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Menu — Categoria</title>
+  <title>Moka — Menù Categoria</title>
+  
   <link rel="stylesheet" href="menu.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
-  <!-- Assumiamo che app/menu.js sia presente e fornisca mostrareCategoriaView e mostrareMacrocategorie -->
-  <script src="./app/menu.js" defer></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
-    /* piccoli adattamenti per questa pagina */
-    body { background: #f5f7fa; padding-bottom: 40px; }
-    .container { max-width: 900px; margin: 20px auto; }
+    :root {
+      --primary-dark: #2c3e50;
+      --accent-moka: #e74c3c;
+      --bg-app: #f8f9fa;
+    }
+
+    body { 
+      background-color: var(--bg-app); 
+      font-family: 'Inter', sans-serif;
+      padding-bottom: 140px; /* Spazio aumentato per il carrello mobile */
+    }
+
+    /* Riga 1: Torna indietro */
+    .nav-row-back {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+      border-bottom: 1px solid #dee2e6;
+      padding: 12px 0;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .btn-back-full {
+      color: #7f8c8d;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .btn-back-full:hover { color: var(--accent-moka); }
+
+    /* Riga 2: Titolo Categoria */
+    .nav-row-title {
+      background: #fff;
+      border-bottom: 2px solid #eee;
+      padding: 15px 0;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .category-main-title {
+      font-weight: 800;
+      font-size: 1.7rem;
+      color: var(--primary-dark);
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Pills Sottocategorie */
+    .subcategory-pills-container {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 5px 15px 20px;
+      scrollbar-width: none;
+      text-align: center;
+    }
+    .subcategory-pills-container::-webkit-scrollbar { display: none; }
+    
+    .pill-link {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      text-decoration: none;
+      margin: 0 5px;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .pill-link.active {
+      background: var(--accent-moka);
+      color: white;
+      border-color: var(--accent-moka);
+    }
+
+    /* Titolo Sezione Sottocategoria */
+    .subcategory-header-btn {
+      width: 100%;
+      background: var(--primary-dark);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .dish-card {
+      background: white;
+      border-radius: 18px;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .dish-name { font-weight: 700; font-size: 1.1rem; color: #1a1a1a; }
+    .dish-price { font-weight: 800; font-size: 1.2rem; color: #2ecc71; }
+
+    /* Pulsanti Quantità Pietanza */
+    .qty-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f3f5;
+      padding: 4px;
+      border-radius: 14px;
+    }
+
+    .btn-qty {
+      background: white;
+      color: var(--primary-dark);
+      border: 1px solid #dee2e6;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-qty-plus { background: var(--accent-moka); color: white; border: none; }
+    .btn-qty:active { transform: scale(0.9); }
+    
+    .qty-indicator { font-weight: 800; min-width: 20px; text-align: center; font-size: 1rem; }
+
+    /* OTTIMIZZAZIONE CARRELLO PER MOBILE */
+    #carrello {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+      border-top: 2px solid var(--accent-moka);
+      z-index: 1050;
+      padding: 15px 0;
+    }
+    
+    .cart-info-mobile { line-height: 1.2; }
+    .cart-total-mobile { font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); }
+    .btn-invia-mobile { font-weight: 800; text-transform: uppercase; padding: 12px 20px; border-radius: 12px; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div id="topbar" class="d-flex align-items-center mb-3">
-      <a href="menu.html" id="btn-back-to-menu" class="btn btn-outline-secondary btn-sm me-3">
-        <i class="fas fa-arrow-left me-1"></i> Torna al Menu
-      </a>
-      <h4 id="page-title" style="margin:0;">Categoria</h4>
-    </div>
+<body class="menu-page">
 
-    <div id="menu" class="menu-page">
-      <div id="loading" style="text-align:center; padding:40px;">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3">Caricamento categoria...</p>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="container">
+      <div class="row py-2">
+        <div class="col-12 text-center">
+          <h1 class="h5 mb-0"><i class="fas fa-utensils me-2"></i>RistoranteMoka</h1>
+        </div>
+      </div>
+      <div class="row py-1 align-items-center flex-nowrap">
+        <div class="col-6 d-flex align-items-center">
+          <i class="fas fa-table me-1"></i>
+          <span class="fw-semibold">Tavolo: <span id="tavolo-numero">--</span></span>
+        </div>
+        <div class="col-6 d-flex justify-content-end align-items-center">
+          <div class="d-flex align-items-center" style="max-width:260px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+            <span id="cliente-corrente-letter" class="badge bg-primary me-2">-</span>
+            <span id="cliente-corrente-nome" class="text-truncate">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="row py-1">
+        <div class="col-6 d-flex align-items-center">
+          <button id="btn-apri-bevande-unico" class="btn btn-bevande btn-sm me-2" type="button">
+            <i class="fas fa-wine-glass-alt me-1"></i> Ordina bevande
+          </button>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+          <button id="btn-visualizza-ordini" class="btn btn-ordini btn-sm" type="button">
+            <i class="fas fa-history me-1"></i> I tuoi ordini
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
+  <div class="nav-row-back shadow-sm">
+    <div class="container">
+      <a href="#" id="btn-back-dynamic" class="btn-back-full">
+        <i class="fas fa-chevron-left me-2"></i> Torna indietro al Menu principale
+      </a>
+    </div>
+  </div>
+
+  <div class="nav-row-title shadow-sm">
+    <div class="container">
+      <h2 id="page-context-title" class="category-main-title">Menù</h2>
+    </div>
+  </div>
+
+  <main class="container">
+    <div id="subcategory-nav" class="subcategory-pills-container"></div>
+    <div id="menu-container">
+      <div class="text-center py-5" id="spinner-loading">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="mt-2 text-muted">Caricamento in corso...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL BEVANDE - RIPRISTINATO STRUTTURA TECNICA -->
+  <div class="modal fade" id="modal-bevande" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-wine-glass-alt me-2"></i>Aggiungi Bevande</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Seleziona bevanda</label>
+            <select class="form-select" id="select-bevanda">
+              <option value="7">Acqua naturale 1L - €2.50</option>
+              <option value="11">Acqua frizzante 1L - €2.50</option>
+              <option value="8">Vino rosso (bottiglia) - €18.00</option>
+              <option value="9">Vino bianco (bottiglia) - €16.00</option>
+              <option value="16">Birra artigianale 0.5L - €5.00</option>
+              <option value="10">Coca Cola 0.33L - €3.00</option>
+              <option value="12">Succo di frutta - €4.00</option>
+              <option value="13">Caffè - €1.50</option>
+            </select>
+            <div class="mt-3 text-center">
+                <label class="form-label d-block mb-2 small">Quantità</label>
+                <div class="contatore-quantita d-flex justify-content-center align-items-center gap-3">
+                    <button class="btn btn-outline-secondary" type="button" id="btn-bevanda-meno"><i class="fas fa-minus"></i></button>
+                    <span class="h4 mb-0" id="quantita-bevanda">1</span>
+                    <button class="btn btn-outline-secondary" type="button" id="btn-bevanda-piu"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="mt-2"><small class="text-muted">Totale: €<span id="prezzo-totale-bevanda">0.00</span></small></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Condivisione</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="condivisione-bevanda" id="cond-personale" value="personale" checked>
+              <label class="form-check-label" for="cond-personale"><i class="fas fa-user me-1"></i> Solo per me</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="condivisione-bevanda" id="cond-tavolo" value="tavolo">
+              <label class="form-check-label" for="cond-tavolo"><i class="fas fa-users me-1"></i> Per tutto il tavolo</label>
+            </div>
+          </div>
+          <div class="alert alert-info small"><i class="fas fa-info-circle me-2"></i>Le bevande verranno aggiunte al carrello.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+          <button type="button" class="btn btn-primary" id="btn-modal-aggiungi-bevanda">Aggiungi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ORDINI - RIPRISTINATO STRUTTURA TECNICA -->
+  <div class="modal fade" id="modal-miei-ordini" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-history me-2"></i>I miei ordini</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div id="mio-ordini-loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="small text-muted mt-2">Caricamento ordini...</div>
+          </div>
+          <div id="mio-ordini-vuoto" class="d-none p-3 text-center">Nessun ordine trovato.</div>
+          <div id="mio-ordini-contenitore" class="d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARRELLO -->
+  <div id="carrello" style="display: none;">
+      <div class="container">
+          <!-- AREA TECNICA PER LO SCRIPT -->
+          <div id="carrello-contenuto" style="display:none;"></div>
+          
+          <div class="row align-items-center g-0">
+              <div class="col-7 cart-info-mobile">
+                  <div class="small text-muted">Il tuo ordine:</div>
+                  <div class="cart-total-mobile">&euro; <span id="totale-prezzo">0.00</span></div>
+                  <div class="small fw-semibold text-primary"><span id="totale-articoli">0</span> articoli selezionati</div>
+              </div>
+              <div class="col-5 text-end">
+                  <button id="btn-invia-ordine" class="btn btn-success btn-invia-mobile w-100">
+                      INVIA <i class="fas fa-paper-plane ms-1"></i>
+                  </button>
+                  <a href="javascript:void(0)" class="small text-danger d-block mt-2 text-decoration-none" onClick="svuotaCarrello()">
+                    <i class="fas fa-trash-alt me-1"></i>Svuota
+                  </a>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script src="inizializza/js/modal-accessibility.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="inizializza/js/state.js"></script>
+  <script src="inizializza/js/state-shim.js"></script>
+  <script src="inizializza/js/cart-ui.js"></script>
+  <script src="inizializza/js/api-service.js"></script>
+  <script src="menu.js"></script>
+  <script src="menu-events.js"></script>
+  <script src="menu-modals.js"></script>
+
   <script>
     (function () {
       const qs = new URLSearchParams(window.location.search);
-      const macroParam = qs.get('macro') || '';
-      const normalized = (s) => (s || '').toString().trim().toLowerCase();
+      const macroParam = (qs.get('macro') || '').toLowerCase().trim();
 
-      async function fetchMenu() {
+      // --- FIX: Persistenza dei parametri (sessione, tavolo, cliente) al ritorno ---
+      document.getElementById('btn-back-dynamic').onclick = (e) => {
+        e.preventDefault();
+        const backParams = new URLSearchParams(window.location.search);
+        backParams.delete('macro'); // Rimuoviamo solo il parametro macro per tornare alla home corretta
+        window.location.href = 'menu.html?' + backParams.toString();
+      };
+
+      async function init() {
         try {
           const resp = await fetch('../api/menu/menu.php');
           const data = await resp.json();
-          if (!(data && data.success)) {
-            document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore nel caricamento del menu</div>';
-            return null;
-          }
-          return data.data;
-        } catch (e) {
-          document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore di connessione</div>';
-          return null;
-        }
+          const categories = data.data || [];
+          
+          const macros = categories.map(c => {
+            let subs = (c.sottocategorie || [])
+              .filter(sub => sub.visibile != 0)
+              .map(sub => ({ nome: sub.nome, piatti: sub.piatti || [] }));
+            if (c.piatti && c.piatti.length) subs.unshift({ nome: `${c.nome} Classici`, piatti: c.piatti });
+            return { nome: c.nome, sottocategorie: subs };
+          });
+
+          const found = macros.find(m => m.nome.toLowerCase().includes(macroParam));
+          if (found) render(found);
+          else document.getElementById('menu-container').innerHTML = `<div class="alert alert-warning text-center">Categoria non trovata.</div>`;
+        } catch (e) { console.error(e); }
       }
 
-      // Adattiamo la struttura così com'è restituita da api/menu/menu.php
-      // Ogni elemento di "categories" è:
-      // {
-      //   id, nome, ordine,
-      //   piatti: [ ... piatti SENZA sottocategoria ... ],
-      //   sottocategorie: [
-      //     { id, nome, ordine, visibile, piatti: [ ... ] },
-      //     ...
-      //   ]
-      // }
-      function buildMacrosFrom(categories) {
-        if (!Array.isArray(categories)) return [];
-
-        return categories.map(c => {
-          const macroNome = c.nome || c.titolo || 'Categoria';
-
-          // Partiamo dalle sottocategorie REALI, se esistono
-          let sottocategorie = [];
-
-          if (Array.isArray(c.sottocategorie) && c.sottocategorie.length) {
-            sottocategorie = c.sottocategorie
-              // tieni solo quelle visibili o senza flag
-              .filter(sub => sub.visibile === undefined || sub.visibile === null || sub.visibile === 1 || sub.visibile === '1')
-              // ordina per ordine e nome
-              .slice()
-              .sort((a, b) => {
-                const oa = parseInt(a.ordine || 0, 10) || 0;
-                const ob = parseInt(b.ordine || 0, 10) || 0;
-                if (oa !== ob) return oa - ob;
-                return (a.nome || '').localeCompare(b.nome || '');
-              })
-              .map(sub => ({
-                nome: sub.nome || 'Sottocategoria',
-                piatti: Array.isArray(sub.piatti) ? sub.piatti : []
-              }));
-          }
-
-          // Se esistono piatti SENZA sottocategoria (c.piatti),
-          // possiamo opzionalmente considerarli come una sottocategoria "Generale" in testa.
-          const piattiSenzaSub = Array.isArray(c.piatti) ? c.piatti : [];
-
-          if (piattiSenzaSub.length) {
-            sottocategorie.unshift({
-              nome: macroNome, // o "Tutti", "Generale", ecc.
-              piatti: piattiSenzaSub
-            });
-          }
-
-          return {
-            nome: macroNome,
-            sottocategorie
+      function render(macro) {
+        document.getElementById('page-context-title').textContent = macro.nome;
+        const nav = document.getElementById('subcategory-nav');
+        const container = document.getElementById('menu-container');
+        container.innerHTML = '';
+        
+        macro.sottocategorie.forEach((sub, idx) => {
+          const pill = document.createElement('a');
+          pill.className = `pill-link ${idx === 0 ? 'active' : ''}`;
+          pill.textContent = sub.nome;
+          pill.href = `#sub-${idx}`;
+          pill.onclick = () => {
+            document.querySelectorAll('.pill-link').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
           };
+          nav.appendChild(pill);
+
+          const sec = document.createElement('section');
+          sec.id = `sub-${idx}`;
+          sec.className = "mb-5";
+          sec.innerHTML = `<div class="subcategory-header-btn"><span>${sub.nome}</span></div>`;
+          
+          sub.piatti.forEach(p => {
+            const div = document.createElement('div');
+            div.className = "dish-card";
+            div.innerHTML = `
+              <div class="dish-info">
+                <div class="dish-name">${p.nome}</div>
+                <div class="dish-description text-muted small">${p.descrizione || ''}</div>
+                <div class="mt-2">
+                  ${p.tempo_preparazione ? `<span class="badge bg-light text-dark border me-1"><i class="far fa-clock me-1"></i>${p.tempo_preparazione}m</span>` : ''}
+                  ${p.punti_fedelta ? `<span class="badge bg-warning text-dark border"><i class="fas fa-star me-1"></i>${p.punti_fedelta} pt</span>` : ''}
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="dish-price">&euro; ${parseFloat(p.prezzo).toFixed(2)}</div>
+                <div class="qty-btn-group mt-2">
+                    <button class="btn-qty btn-qty-minus" onclick="rimuovereDalCarrello(${p.id})"><i class="fas fa-minus"></i></button>
+                    <span class="qty-indicator" id="qty-${p.id}">0</span>
+                    <button class="btn-qty btn-qty-plus" onclick="aggiungereAlCarrello(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${p.prezzo})"><i class="fas fa-plus"></i></button>
+                </div>
+              </div>`;
+            sec.appendChild(div);
+          });
+          container.appendChild(sec);
         });
       }
-
-      async function init() {
-        const raw = await fetchMenu();
-        if (!raw) return;
-
-        const macros = buildMacrosFrom(raw);
-        window._menu_macros = macros;
-
-        if (!macroParam) {
-          // se nessun parametro, mostra lista macrocategorie
-          try { if (typeof mostrareMacrocategorie === 'function') mostrareMacrocategorie(macros); else document.getElementById('menu').innerText = 'Nessuna macro selezionata.'; } catch(e){ console.warn(e); }
-          return;
-        }
-
-        // trova macro per nome (case-insensitive) o per titolo
-        const found = macros.find(m => normalized(m.nome || m.titolo) === normalized(macroParam) || normalized(m.nome || m.titolo).includes(normalized(macroParam)));
-        if (found) {
-          // imposta titolo pagina
-          try { document.getElementById('page-title').textContent = found.nome || found.titolo || 'Categoria'; } catch(e){}
-          try {
-            // usa la funzione esistente per renderizzare la vista categoria
-            if (typeof mostrareCategoriaView === 'function') {
-              mostrareCategoriaView(found);
-            } else {
-              // fallback: render categorie e piatti con layout simile a menu.html
-              const cont = document.getElementById('menu');
-              cont.innerHTML = '';
-
-              const card = document.createElement('div');
-              card.className = 'card mb-4';
-
-              const header = document.createElement('div');
-              header.className = 'card-header';
-              header.textContent = found.nome || found.titolo || 'Categoria';
-              card.appendChild(header);
-
-              const body = document.createElement('div');
-              body.className = 'card-body';
-
-              if (Array.isArray(found.sottocategorie)) {
-                found.sottocategorie.forEach(sub => {
-                  const s = document.createElement('div');
-                  s.className = 'mb-4';
-
-                  const h = document.createElement('h5');
-                  h.className = 'mb-3';
-                  h.textContent = sub.nome || sub.titolo || 'Sottocategoria';
-                  s.appendChild(h);
-
-                  if (Array.isArray(sub.piatti) && sub.piatti.length) {
-                    const list = document.createElement('div');
-                    list.className = 'list-group';
-
-                    sub.piatti.forEach(p => {
-                      const item = document.createElement('div');
-                      item.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-                      const left = document.createElement('div');
-
-                      const nome = document.createElement('div');
-                      nome.className = 'fw-bold';
-                      nome.textContent = p.nome || p.titolo || 'Piatto';
-                      left.appendChild(nome);
-
-                      if (p.descrizione) {
-                        const desc = document.createElement('div');
-                        desc.className = 'text-muted small';
-                        desc.textContent = p.descrizione;
-                        left.appendChild(desc);
-                      }
-
-                      // Riga con tempo di preparazione e punti fedeltà
-                      const meta = document.createElement('div');
-                      meta.className = 'mt-1 small';
-                      const tempo = (typeof p.tempo_preparazione === 'number')
-                        ? p.tempo_preparazione + ' min'
-                        : '';
-                      const punti = (typeof p.punti_fedelta === 'number')
-                        ? p.punti_fedelta + ' punti'
-                        : '';
-                      const parts = [tempo, punti].filter(Boolean);
-                      if (parts.length) {
-                        if (tempo) {
-                          const tempoBadge = document.createElement('span');
-                          tempoBadge.className = 'meta-badge-tempo me-2';
-                          tempoBadge.textContent = tempo;
-                          meta.appendChild(tempoBadge);
-                        }
-
-                        if (punti) {
-                          const puntiBadge = document.createElement('span');
-                          puntiBadge.className = 'meta-badge-punti';
-                          puntiBadge.textContent = punti;
-                          meta.appendChild(puntiBadge);
-                        }
-
-                        left.appendChild(meta);
-                      }
-
-                      item.appendChild(left);
-
-                      const right = document.createElement('div');
-                      right.className = 'text-end';
-
-                      const prezzo = document.createElement('div');
-                      prezzo.className = 'fw-semibold';
-                      prezzo.textContent = p.prezzo_formattato || (p.prezzo != null ? ('€' + p.prezzo.toFixed(2)) : '');
-                      right.appendChild(prezzo);
-
-                      const btn = document.createElement('button');
-                      btn.className = 'btn btn-ordina btn-sm mt-2';
-                      btn.type = 'button';
-                      btn.setAttribute('aria-label', 'Aggiungi ' + (p.nome || 'piatto'));
-                      btn.innerHTML = '<i class="fas fa-plus me-1"></i>Aggiungi';
-                      // Qui in futuro potremo collegare il bottone al carrello
-                      right.appendChild(btn);
-
-                      item.appendChild(right);
-                      list.appendChild(item);
-                    });
-
-                    s.appendChild(list);
-                  } else {
-                    const none = document.createElement('div');
-                    none.className = 'text-muted';
-                    none.textContent = 'Nessun piatto in questa sottocategoria';
-                    s.appendChild(none);
-                  }
-
-                  body.appendChild(s);
-                });
-              } else {
-                body.innerHTML = '<div class="text-muted">Nessuna sottocategoria disponibile</div>';
-              }
-
-              card.appendChild(body);
-              cont.appendChild(card);
-            }
-          } catch (e) {
-            console.warn('Errore rendering categoria:', e);
-          }
-        } else {
-          // macro non trovata: mostra elenco macros come fallback
-          try { mostrareMacrocategorie(macros); } catch(e) { document.getElementById('menu').innerHTML = '<div class="alert alert-warning">Categoria non trovata</div>'; }
-        }
-      }
-
       window.addEventListener('load', init);
     })();
   </script>
