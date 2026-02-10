@@ -429,37 +429,7 @@ function inizializzareUI() {
         // Carica ordini precedenti
         try { caricareOrdiniPrecedenti(); } catch(e){}
 
-        // Assicura presenza di un pulsante unico "Ordina bevande" nella header se la categoria Bevande non è mostrata
-        try {
-                    if (!document.getElementById('btn-apri-bevande-unico')) {
-                const headerRow = document.querySelector('.header .container .row .col-8') || document.querySelector('.header .container .row');
-                const containerForBtn = headerRow || document.querySelector('.header .container');
-                if (containerForBtn) {
-                    const wrapper = document.createElement('div');
-                    wrapper.style.display = 'inline-block';
-                    wrapper.style.marginLeft = '12px';
-                    wrapper.style.marginTop = '6px';
-                    const btn = document.createElement('button');
-                    btn.id = 'btn-apri-bevande-unico';
-                    btn.type = 'button';
-                    btn.className = 'btn btn-outline-primary btn-sm';
-                    btn.textContent = 'Ordina bevande';
-                    // binding idempotente: evita duplicati se il codice viene eseguito più volte
-                    if (!btn.dataset.boundClick) {
-                        btn.addEventListener('click', () => { try { apriModalBevande(); } catch(e) { console.error('Errore apriModalBevande', e); } });
-                        btn.dataset.boundClick = '1';
-                    }
-                    wrapper.appendChild(btn);
-                    // preferisci inserire il bottone nella col-4 (destra) se esiste, altrimenti nella col-8 o nel container principale
-                    const headerRight = document.querySelector('.header .container .row .col-4.text-end');
-                    if (headerRight) {
-                        headerRight.insertBefore(wrapper, headerRight.firstChild);
-                    } else {
-                        containerForBtn.appendChild(wrapper);
-                    }
-                }
-            }
-        } catch(e) { console.warn('inizializzareUI: non posso inserire btn-apri-bevande-unico', e); }
+        // Iniezione automatica pulsante bevande rimossa per nuovo flusso
 
         // AGGIUNTA: mostra pulsante "Torna alla Home cameriere" se arrivo dal cameriere
         if (window.arrivaDaCameriere) {
@@ -478,15 +448,9 @@ function inizializzareUI() {
             }
         }
                 // FINE AGGIUNTA
-
         // Ensure persistent idempotent bindings for header buttons (in case they were created elsewhere)
         try {
-            // bind Ordina bevande button if present
-            const bBev = document.getElementById('btn-apri-bevande-unico');
-            if (bBev && !bBev.dataset.boundClick) {
-                bBev.addEventListener('click', () => { try { apriModalBevande(); } catch(e) { console.error('apriModalBevande error', e); } });
-                bBev.dataset.boundClick = '1';
-            }
+            // bind Ordina bevande button rimosso
             // bind Visualizza ordini button if present
             const bOrd = document.getElementById('btn-visualizza-ordini');
             if (bOrd && !bOrd.dataset.boundClick) {

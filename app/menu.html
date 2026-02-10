@@ -45,15 +45,8 @@
 
     <!-- Riga bottoni -->
     <div class="row py-1">
-      <div class="col-6 d-flex align-items-center">
-        <button id="btn-apri-bevande-unico" class="btn btn-bevande btn-sm me-2" type="button" aria-label="Ordina bevande">
-          <i class="fas fa-wine-glass-alt me-1"></i>
-          Ordina bevande
-        </button>
-      </div>
-
-      <div class="col-6 d-flex justify-content-end">
-        <button id="btn-visualizza-ordini" class="btn btn-ordini btn-sm" type="button" aria-label="I tuoi ordini">
+      <div class="col-12 d-flex justify-content-center">
+        <button id="btn-visualizza-ordini" class="btn btn-ordini btn-sm w-100" type="button" aria-label="I tuoi ordini">
           <i class="fas fa-history me-1"></i>
           I tuoi ordini
         </button>
@@ -91,13 +84,18 @@
           <span class="icon"><i class="fas fa-ice-cream"></i></span>
           <span class="label">DESSERT</span>
         </button>
+
+        <button class="mm-macro-btn mm-macro-bevande" data-macro="bevande" aria-pressed="false" aria-controls="panel-bevande" style="background: linear-gradient(180deg,#FFA726 0%,#FB8C00 100%);">
+          <span class="icon"><i class="fas fa-wine-glass-alt"></i></span>
+          <span class="label">BEVANDE</span>
+        </button>
       </div>
     </section>
   </main>
 
     <!-- Modal "Aggiungi Bevande" -->
     <div class="modal fade" id="modal-bevande" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="fas fa-wine-glass-alt me-2"></i>Aggiungi Bevande</h5>
