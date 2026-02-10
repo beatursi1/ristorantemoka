@@ -214,7 +214,8 @@
         e.preventDefault();
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.delete('macro');
-        window.location.href = 'menu.html?' + currentParams.toString();
+        const paramString = currentParams.toString();
+        window.location.href = 'menu.html' + (paramString ? '?' + paramString : '');
       };
 
       // FORZATURA NOME: Cerca nel localStorage o nell'URL
