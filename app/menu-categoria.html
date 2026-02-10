@@ -212,7 +212,9 @@
       // Back button dinamico
       document.getElementById('btn-back-dynamic').onclick = (e) => {
         e.preventDefault();
-        window.location.href = 'menu.html?' + qs.toString().replace(/&?macro=[^&]*/g, "");
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.delete('macro');
+        window.location.href = 'menu.html?' + currentParams.toString();
       };
 
       // FORZATURA NOME: Cerca nel localStorage o nell'URL
