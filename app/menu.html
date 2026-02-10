@@ -240,7 +240,7 @@
 <!-- script principale della pagina (menu.js) -->
 <script src="menu.js"></script>
 
-<!-- JS locale per apertura pannelli macrocategorie (lightweight, non tocca il resto) -->
+<!-- JS locale CORRETTO per mantenere la sessione durante la navigazione -->
 <script>
   (function(){
     const macroBtns = document.querySelectorAll('.mm-macro-btn');
@@ -248,9 +248,11 @@
     macroBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const macro = btn.dataset.macro || '';
-        // Qui in seguito useremo 'macro' per aprire una pagina dedicata (menu-categoria)
-        // Per ora ci basta sapere che ad ogni click abbiamo il valore della macrocategoria
-        window.location.href = 'menu-categoria.html?macro=' + encodeURIComponent(macro);
+        
+        // --- RISOLUZIONE BUG: Persistenza Parametri ---
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.set('macro', macro);
+        window.location.href = 'menu-categoria.html?' + currentParams.toString();
       });
     });
   })();
