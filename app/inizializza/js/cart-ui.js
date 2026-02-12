@@ -1,8 +1,10 @@
-// cart-ui.js
+/**
+ * CART-UI.JS - Versione Definitiva Corretta
+ */
 (function () {
   'use strict';
 
-  // Restituisce colore associato a lettera cliente
+  // 1. Colori per i badge clienti
   function getColoreCliente(lettera) {
     const colori = {
       'A': '#3498db', 'B': '#2ecc71', 'C': '#e74c3c',
@@ -13,121 +15,93 @@
     return colori[lettera] || '#95a5a6';
   }
 
-  // Mostra notifica temporanea (stessa UI del file originale)
+  // 2. Sistema di notifiche globale
   function mostraNotifica(messaggio) {
     try {
-      const notifica = document.createElement('div');
-      notifica.className = 'alert alert-success position-fixed';
-      notifica.style.cssText = `
-        top: 20px; right: 20px; z-index: 9999;
-        animation: fadeInOut 3s ease-in-out;
-      `;
-      notifica.innerHTML = `<i class="fas fa-check-circle me-2"></i>${messaggio}`;
+      const vecchia = document.querySelector('.cart-notifica-temp');
+      if (vecchia) vecchia.remove();
 
-      document.body.appendChild(notifica);
-
-      setTimeout(() => {
-        try { notifica.remove(); } catch (e) { /* ignore */ }
-      }, 3000);
-    } catch (e) {
-      console.warn('CartUI.mostraNotifica errore:', e);
-    }
+      const n = document.createElement('div');
+      n.className = 'alert alert-success position-fixed cart-notifica-temp';
+      n.style.cssText = 'top:20px;right:20px;z-index:9999;box-shadow:0 4px 15px rgba(0,0,0,0.2);animation:fadeInOut 3s ease-in-out;';
+      n.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + messaggio;
+      document.body.appendChild(n);
+      setTimeout(function() { if(n && n.parentNode) n.remove(); }, 3000);
+    } catch (e) { console.warn('Errore notifica:', e); }
   }
 
-  // Aggiorna la UI del carrello leggendo il "carrello" globale (proxy)
+  // 3. Aggiornamento interfaccia carrello e numerini pietanze
   function aggiornareCarrelloUI() {
     try {
-      const totaleArticoli = Array.isArray(window.carrello) ? window.carrello.length : 0;
-      const totalePrezzo = (Array.isArray(window.carrello) ? window.carrello.reduce((sum, item) => sum + (Number(item.prezzo) || 0), 0) : 0);
-
-      const elTotArt = document.getElementById('totale-articoli');
-      const elTotPrez = document.getElementById('totale-prezzo');
-      if (elTotArt) elTotArt.textContent = totaleArticoli;
-      if (elTotPrez) elTotPrez.textContent = Number(totalePrezzo).toFixed(2);
-
-      const container = document.getElementById('carrello-contenuto');
-      if (!container) return;
-
-      // Svuota in modo sicuro
-      while (container.firstChild) container.removeChild(container.firstChild);
-
-      if (!Array.isArray(window.carrello) || window.carrello.length === 0) {
-        const p = document.createElement('p');
-        p.className = 'text-muted mb-0';
-        p.innerHTML = '<em>Carrello vuoto</em>';
-        container.appendChild(p);
-      } else {
-        window.carrello.forEach((item, index) => {
-          try {
-            const row = document.createElement('div');
-            row.className = 'carrello-item d-flex justify-content-between align-items-center py-1';
-
-            const left = document.createElement('div');
-            const nomeEl = document.createElement('span');
-            nomeEl.textContent = item.nome || '';
-            left.appendChild(nomeEl);
-
-            const badge = document.createElement('span');
-            badge.className = 'cliente-label';
-            badge.style.background = getColoreCliente(item.cliente);
-            badge.textContent = item.cliente || '';
-            badge.style.marginLeft = '8px';
-            left.appendChild(badge);
-
-            const right = document.createElement('div');
-            right.className = 'd-flex align-items-center';
-
-            const prezzoEl = document.createElement('span');
-            prezzoEl.className = 'fw-bold me-3';
-            prezzoEl.textContent = '€' + Number(item.prezzo || 0).toFixed(2);
-            right.appendChild(prezzoEl);
-
-            const btnRimuovi = document.createElement('button');
-            btnRimuovi.className = 'btn-rimuovi btn btn-sm btn-outline-danger';
-            btnRimuovi.type = 'button';
-            btnRimuovi.setAttribute('aria-label', 'Rimuovi elemento dal carrello');
-            btnRimuovi.style.marginLeft = '8px';
-            btnRimuovi.addEventListener('click', function () {
-              try {
-                if (typeof window.rimuovereDalCarrello === 'function') {
-                  window.rimuovereDalCarrello(index);
-                } else if (Array.isArray(window.carrello)) {
-                  window.carrello.splice(index, 1);
-                  aggiornareCarrelloUI();
-                }
-              } catch (e) { console.warn('Errore rimuovi item:', e); }
-            });
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-times';
-            btnRimuovi.appendChild(icon);
-            right.appendChild(btnRimuovi);
-
-            row.appendChild(left);
-            row.appendChild(right);
-            container.appendChild(row);
-          } catch (e) { /* non fermare il rendering per un singolo elemento */ }
-        });
+      const carrello = Array.isArray(window.carrello) ? window.carrello : [];
+      
+      // Aggiorna totali barra carrello
+      const elArt = document.getElementById('totale-articoli');
+      const elPrez = document.getElementById('totale-prezzo');
+      if (elArt) elArt.textContent = carrello.length;
+      if (elPrez) {
+        const totale = carrello.reduce(function(acc, item) {
+          return acc + (parseFloat(item.prezzo) * (parseInt(item.quantita) || 1));
+        }, 0);
+        elPrez.textContent = totale.toFixed(2);
       }
 
-      const carrelloEl = document.getElementById('carrello');
-      if (carrelloEl) carrelloEl.style.display = (totaleArticoli > 0) ? 'block' : 'none';
-    } catch (e) {
-      console.warn('CartUI.aggiornareCarrelloUI errore:', e);
-    }
+      // --- AGGIORNA NUMERINI SULLE PIETANZE (id="qty-ID") ---
+      document.querySelectorAll('.qty-indicator').forEach(function(el) { el.textContent = '0'; });
+      const conteggi = {};
+      carrello.forEach(function(item) {
+        const id = String(item.id);
+        conteggi[id] = (conteggi[id] || 0) + (parseInt(item.quantita) || 1);
+      });
+      for (let id in conteggi) {
+        const indicator = document.getElementById('qty-' + id);
+        if (indicator) indicator.textContent = conteggi[id];
+      }
+
+      // Aggiorna contenuto lista (per il modale riepilogo)
+      const container = document.getElementById('carrello-contenuto');
+      if (container) {
+        container.innerHTML = '';
+        if (carrello.length === 0) {
+          container.innerHTML = '<p class="text-muted mb-0"><em>Carrello vuoto</em></p>';
+        } else {
+          carrello.forEach(function(item, index) {
+            const row = document.createElement('div');
+            row.className = 'd-flex justify-content-between align-items-center py-2 border-bottom';
+            row.innerHTML = 
+              '<div class="d-flex align-items-center">' +
+                '<span class="badge me-2" style="background:' + getColoreCliente(item.cliente) + ' !important">' + item.cliente + '</span>' +
+                '<span style="font-size:0.9rem">' + (parseInt(item.quantita) > 1 ? item.quantita + 'x ' : '') + item.nome + '</span>' +
+              '</div>' +
+              '<div class="d-flex align-items-center">' +
+                '<span class="fw-bold me-2">€' + (parseFloat(item.prezzo) * (parseInt(item.quantita) || 1)).toFixed(2) + '</span>' +
+                '<button class="btn btn-sm text-danger p-0" onclick="rimuovereDalCarrello(' + index + ')"><i class="fas fa-times-circle"></i></button>' +
+              '</div>';
+            container.appendChild(row);
+          });
+        }
+      }
+
+      // Mostra/Nascondi barra carrello
+      const carEl = document.getElementById('carrello');
+      if (carEl) carEl.style.display = (carrello.length > 0) ? 'block' : 'none';
+
+    } catch (e) { console.error('CartUI Error:', e); }
   }
 
-  // Espongo un'API globale semplice (no module loader richiesto)
-  window.CartUI = window.CartUI || {};
-  window.CartUI.getColoreCliente = getColoreCliente;
-  window.CartUI.mostraNotifica = mostraNotifica;
-  window.CartUI.aggiornareCarrelloUI = aggiornareCarrelloUI;
+  // Esposizione funzioni per altri file
+  window.mostraNotifica = mostraNotifica;
+  window.aggiornareCarrelloUI = aggiornareCarrelloUI;
+  window.CartUI = {
+    getColoreCliente: getColoreCliente,
+    mostraNotifica: mostraNotifica,
+    aggiornareCarrelloUI: aggiornareCarrelloUI
+  };
 
-  // inizializzazione opzionale: aggiorna UI al caricamento se carrello già popolato
-  try {
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      setTimeout(() => { try { aggiornareCarrelloUI(); } catch(e){} }, 0);
-    } else {
-      document.addEventListener('DOMContentLoaded', () => { try { aggiornareCarrelloUI(); } catch(e){} });
-    }
-  } catch (e) {}
+  // Esecuzione immediata
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', aggiornareCarrelloUI);
+  } else {
+    aggiornareCarrelloUI();
+  }
 })();

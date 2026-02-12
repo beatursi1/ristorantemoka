@@ -43,14 +43,12 @@ async function leggereParametriUrl() {
     window.arrivaDaCameriere = !!clienteDaCameriere || !!sessioneClienteId;
 
     // Base: proviamo a usare prima la sessione, altrimenti tavolo
-    parametriUrl = {
-        sessione: sessioneToken || null,
-        tavolo: tavoloParam || null,
-        cliente: null,
-        session_id: null,             // compatibilità   interna (vecchio nome)
-        sessione_cliente_id: sessioneClienteId || null, // nuovo campo esplicito dal parametro URL
-        tavolo_numero: null
-    };
+    parametriUrl.sessione = sessioneToken || null;
+    parametriUrl.tavolo = tavoloParam || null;
+    parametriUrl.cliente = clienteDaCameriere || null;
+    parametriUrl.session_id = sessioneClienteId || null;
+    parametriUrl.sessione_cliente_id = sessioneClienteId || null;
+    parametriUrl.tavolo_numero = null;
     // Se arrivo dal cameriere con un cliente già   noto (cliente + sessione_cliente_id),
     // imposto direttamente questi parametri e salto la registrazione automatica.
     if (clienteDaCameriere && sessioneClienteId) {
@@ -862,146 +860,67 @@ function mostrareMenu(categorie) {
 // ---------- Fine nuovo sistema ----------
 
 function aggiungereAlCarrello(id, nome, prezzo) {
-    if (!parametriUrl.cliente) {
-        alert('Errore: cliente non specificato');
-        return;
-    }
+    if (!window.carrello) window.carrello = [];
     
-    // Aggiungi al carrello
-    carrello.push({
+    // Recupero lettera cliente ultra-robusto
+    let c = (window.parametriUrl && window.parametriUrl.cliente) ? window.parametriUrl.cliente : null;
+    if (!c || c === '?' || c === '-') {
+        const badge = document.getElementById('cliente-corrente-letter');
+        if (badge) c = badge.textContent.trim();
+    }
+
+    window.carrello.push({
         id: id,
         nome: nome,
-        prezzo: prezzo,
-        cliente: parametriUrl.cliente,
-        timestamp: new Date().toISOString()
+        prezzo: parseFloat(prezzo),
+        cliente: (c && c !== '-' && c !== '?') ? c : '?',
+        timestamp: new Date().toISOString(),
+        quantita: 1
     });
     
-    // Aggiorna UI
-    aggiornareCarrelloUI();
-    
-    // Notifica
-    mostraNotifica(`${nome} aggiunto al carrello`);
-}
-
-function rimuovereDalCarrello(index) {
-    carrello.splice(index, 1);
-    aggiornareCarrelloUI();
-}
-
-function svuotaCarrello() {
-    if (carrello.length === 0) return;
-    
-    if (confirm(`Vuoi svuotare tutto il carrello? (${carrello.length} articoli)`)) {
-        carrello = [];
-        aggiornareCarrelloUI();
+    if (window.CartUI && window.CartUI.aggiornareCarrelloUI) {
+        window.CartUI.aggiornareCarrelloUI();
+        window.CartUI.mostraNotifica(`${nome} aggiunto`);
     }
 }
 
-function aggiornareCarrelloUI() {
-    const totaleArticoli = carrello.length;
-    const totalePrezzo = carrello.reduce((sum, item) => sum + item.prezzo, 0);
+function rimuovereDalCarrello(idOrIndex) {
+    if (!window.carrello || window.carrello.length === 0) return;
+
+    let idx = -1;
+    const stringId = String(idOrIndex);
     
-    // Aggiorna totali
-    const artEl = document.getElementById('totale-articoli');
-    const preEl = document.getElementById('totale-prezzo');
-    if (artEl) artEl.textContent = totaleArticoli;
-    if (preEl) preEl.textContent = totalePrezzo.toFixed(2);
-    
-    // Aggiorna contenuto carrello
-    const container = document.getElementById('carrello-contenuto');
-
-    if (!container) return;
-
-    // Svuota in modo sicuro il contenitore
-    while (container.firstChild) container.removeChild(container.firstChild);
-
-    if (carrello.length === 0) {
-        const p = document.createElement('p');
-        p.className = 'text-muted mb-0';
-        p.innerHTML = '<em>Carrello vuoto</em>';
-        container.appendChild(p);
+    // Se l'indice passato è piccolo (< di carrello.length), lo trattiamo come indice (dalla modale)
+    if (typeof idOrIndex === 'number' && idOrIndex >= 0 && idOrIndex < window.carrello.length) {
+        idx = idOrIndex;
     } else {
-        carrello.forEach((item, index) => {
-            const row = document.createElement('div');
-            row.className = 'carrello-item';
-
-            const left = document.createElement('div');
-            // nome (testo sicuro)
-            const nomeEl = document.createElement('span');
-            nomeEl.textContent = item.nome;
-            left.appendChild(nomeEl);
-
-            // badge cliente
-            const badge = document.createElement('span');
-            badge.className = 'cliente-label';
-            badge.style.background = getColoreCliente(item.cliente);
-            badge.textContent = item.cliente;
-            badge.style.marginLeft = '8px';
-            left.appendChild(badge);
-
-            const right = document.createElement('div');
-            right.className = 'd-flex align-items-center';
-
-            const prezzoEl = document.createElement('span');
-            prezzoEl.className = 'fw-bold me-3';
-            prezzoEl.textContent = '€' + Number(item.prezzo).toFixed(2);
-            right.appendChild(prezzoEl);
-
-            const btnRimuovi = document.createElement('button');
-            btnRimuovi.className = 'btn-rimuovi';
-            btnRimuovi.type = 'button';
-            btnRimuovi.addEventListener('click', () => {
-                rimuovereDalCarrello(index);
-            });
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-times';
-            btnRimuovi.appendChild(icon);
-            right.appendChild(btnRimuovi);
-
-            row.appendChild(left);
-            row.appendChild(right);
-
-            container.appendChild(row);
-        });
+        // Altrimenti è un ID piatto (dal tasto meno del menu), cerchiamo l'ultima occorrenza
+        idx = window.carrello.map(item => String(item.id)).lastIndexOf(stringId);
     }
-    
-    // Mostra/nascondi carrello
-    const carEl = document.getElementById('carrello');
-    if (carEl) {
-        if (totaleArticoli > 0) {
-            carEl.style.display = 'block';
-        } else {
-            carEl.style.display = 'none';
+
+    if (idx > -1) {
+        window.carrello.splice(idx, 1);
+        if (window.CartUI && window.CartUI.aggiornareCarrelloUI) {
+            window.CartUI.aggiornareCarrelloUI();
         }
     }
 }
 
-function getColoreCliente(lettera) {
-    const colori = {
-        'A': '#3498db', 'B': '#2ecc71', 'C': '#e74c3c',
-        'D': '#f39c12', 'E': '#9b59b6', 'F': '#1abc9c',
-        'G': '#7f8c8d', 'H': '#34495e', 'I': '#d35400',
-        'J': '#16a085', 'K': '#8e44ad', 'L': '#2c3e50'
-    };
-    return colori[lettera] || '#95a5a6';
+function svuotaCarrello() {
+    if (!window.carrello || window.carrello.length === 0) return;
+    if (confirm("Vuoi svuotare tutto il carrello?")) {
+        window.carrello = [];
+        if (window.CartUI && window.CartUI.aggiornareCarrelloUI) {
+            window.CartUI.aggiornareCarrelloUI();
+        }
+    }
 }
 
-function mostraNotifica(messaggio) {
-    // Creazione notifica temporanea
-    const notifica = document.createElement('div');
-    notifica.className = 'alert alert-success position-fixed';
-    notifica.style.cssText = `
-        top: 20px; right: 20px; z-index: 9999;
-        animation: fadeInOut 3s ease-in-out;
-    `;
-    notifica.innerHTML = `<i class="fas fa-check-circle me-2"></i>${messaggio}`;
-    
-    document.body.appendChild(notifica);
-    
-
-    setTimeout(() => {
-        notifica.remove();
-    }, 3000);
+// Funzione di delega per compatibilità
+function aggiornareCarrelloUI() {
+    if (window.CartUI && window.CartUI.aggiornareCarrelloUI) {
+        window.CartUI.aggiornareCarrelloUI();
+    }
 }
 function escapeHtml(str) {
 if (str === null || str === undefined) return '';
@@ -1254,33 +1173,81 @@ function aggiungiBevandaAlCarrello() {
     mostraNotifica(`${nomeBevanda} aggiunta al carrello`);
 }
 
-// ================= INVIO ORDINE =================
-async function inviaOrdine() {
+// ================= INVIO ORDINE (MODAL VERSION) =================
+
+/**
+ * Apre il modale di riepilogo per mostrare le pietanze selezionate
+ */
+window.apriRiepilogoCarrello = function() {
     if (carrello.length === 0) {
-        alert('Il carrello è vuoto!');
+        mostraNotifica("Il carrello è vuoto!");
         return;
     }
-    
-    if (!parametriUrl.cliente) {
-        alert('Errore: cliente non specificato!');
-        return;
-    }
-    
-    // Riepilogo ordine
-    let riepilogo = 'RIEPILOGO ORDINE:\n\n';
-    
-    carrello.forEach(item => {
-        riepilogo += `• ${item.nome}: €${item.prezzo.toFixed(2)}\n`;
+
+    const listaCont = document.getElementById('riepilogo-lista-piatti');
+    const totaleCont = document.getElementById('riepilogo-totale');
+    if (!listaCont || !totaleCont) return;
+
+    listaCont.innerHTML = '';
+    let totale = 0;
+
+    carrello.forEach((item, index) => {
+        totale += item.prezzo;
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-between align-items-center py-2 border-bottom';
+        // Recuperiamo il nome attuale dal badge per visualizzarlo nel riepilogo
+        const nomeReale = document.getElementById('cliente-corrente-nome') ? document.getElementById('cliente-corrente-nome').textContent.trim() : '';
+        const etichettaCliente = (nomeReale && nomeReale !== item.cliente) ? `${nomeReale} (${item.cliente})` : `Cliente ${item.cliente}`;
+
+        row.innerHTML = `
+            <div style="flex:1">
+                <div class="fw-bold text-dark">${item.nome}</div>
+                <small class="text-muted">Per: ${etichettaCliente}</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="me-3 fw-bold text-success">€${item.prezzo.toFixed(2)}</span>
+                <button class="btn btn-sm btn-outline-danger border-0 p-2" onclick="rimuovereDalCarrello(${index}); apriRiepilogoCarrello();">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+        listaCont.appendChild(row);
     });
-    
-    const totale = carrello.reduce((sum, item) => sum + item.prezzo, 0);
-    riepilogo += `\nTOTALE: €${totale.toFixed(2)}`;
-    
-    if (!confirm(riepilogo + '\n\nConfermi l\'invio dell\'ordine alla cucina?')) {
-        return;
+
+    totaleCont.textContent = totale.toFixed(2);
+
+    const modalEl = document.getElementById('modal-riepilogo-carrello');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
+};
+
+/**
+ * Il pulsante INVIA ora apre semplicemente il riepilogo
+ */
+async function inviaOrdine() {
+    apriRiepilogoCarrello();
+}
+
+/**
+ * Chiamata dal tasto "CONFERMA E INVIA" dentro il modale
+ */
+window.confermaEInviaOrdine = async function() {
+    const modalEl = document.getElementById('modal-riepilogo-carrello');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) modalInstance.hide();
     
-    // Disabilita il pulsante per evitare invii doppi e mostra spinner
+    await eseguiInviaOrdineAPI();
+};
+
+/**
+ * Esegue l'invio tecnico al server (Ex inviaOrdine)
+ */
+async function eseguiInviaOrdineAPI() {
+    if (carrello.length === 0) return;
+    
+    // Disabilita il pulsante e mostra spinner
     const btnInvia = document.getElementById('btn-invia-ordine');
     let prevHtml = null;
     if (btnInvia) {

@@ -151,18 +151,22 @@
     
     .qty-indicator { font-weight: 800; min-width: 20px; text-align: center; font-size: 1rem; }
 
-    /* OTTIMIZZAZIONE CARRELLO PER MOBILE */
+    /* CARRELLO PREMIUM FLOATING */
     #carrello {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
-      border-top: 2px solid var(--accent-moka);
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 22px;
       z-index: 1050;
-      padding: 15px 0;
+      padding: 15px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    #carrello:active { transform: scale(0.98); }
     
     .cart-info-mobile { line-height: 1.2; }
     .cart-total-mobile { font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); }
@@ -311,26 +315,58 @@
       </div>
     </div>
   </div>
+  <!-- Modale Riepilogo Carrello -->
+  <div class="modal fade" id="modal-riepilogo-carrello" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="fas fa-shopping-cart me-2 text-primary"></i>Il tuo Carrello</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div id="riepilogo-lista-piatti" class="mb-3">
+              <!-- Riempito dinamicamente via JS -->
+          </div>
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+              <span class="fw-bold">Totale da inviare:</span>
+              <span class="h4 mb-0 fw-bold text-success">€<span id="riepilogo-totale">0.00</span></span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 flex-column">
+          <button type="button" class="btn btn-success w-100 py-3 fw-bold rounded-3 mb-2" onClick="confermaEInviaOrdine()">
+              <i class="fas fa-check-circle me-2"></i>CONFERMA E INVIA ORA
+          </button>
+          <button type="button" class="btn btn-link text-danger btn-sm" onClick="svuotaCarrello(); bootstrap.Modal.getInstance(document.getElementById('modal-riepilogo-carrello')).hide();">
+              <i class="fas fa-trash-alt me-1"></i>Svuota tutto il carrello
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- CARRELLO -->
-  <div id="carrello" style="display: none;">
-      <div class="container">
-          <!-- AREA TECNICA PER LO SCRIPT -->
+   <!-- CARRELLO PREMIUM -->
+  <div id="carrello" style="display: none;" onClick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'I' && !event.target.closest('a')) apriRiepilogoCarrello()">
+      <div class="container-fluid">
           <div id="carrello-contenuto" style="display:none;"></div>
-          
           <div class="row align-items-center g-0">
-              <div class="col-7 cart-info-mobile">
-                  <div class="small text-muted">Il tuo ordine:</div>
-                  <div class="cart-total-mobile">&euro; <span id="totale-prezzo">0.00</span></div>
-                  <div class="small fw-semibold text-primary"><span id="totale-articoli">0</span> articoli selezionati</div>
+              <div class="col-7">
+                  <div class="d-flex align-items-center mb-1">
+                      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 24px; height: 24px; font-size: 11px; font-weight: 800;">
+                          <span id="totale-articoli">0</span>
+                      </div>
+                      <span class="fw-bold text-dark" style="font-size: 0.95rem;">Pietanze <span class="text-primary">(vedi)</span></span>
+                  </div>
+                  <div class="fw-bold text-success" style="font-size: 1.5rem; letter-spacing: -1px;">€ <span id="totale-prezzo">0.00</span></div>
               </div>
               <div class="col-5 text-end">
-                  <button id="btn-invia-ordine" class="btn btn-success btn-invia-mobile w-100">
-                      INVIA <i class="fas fa-paper-plane ms-1"></i>
+                  <button type="button" id="btn-invia-ordine" class="btn btn-success w-100 py-3 shadow-sm border-0" style="border-radius: 14px; font-weight: 800; background: linear-gradient(135deg, #2ecc71, #27ae60);" onClick="event.stopPropagation(); apriRiepilogoCarrello()">
+                      INVIA <i class="fas fa-paper-plane ms-2"></i>
                   </button>
-                  <a href="javascript:void(0)" class="small text-danger d-block mt-2 text-decoration-none" onClick="svuotaCarrello()">
-                    <i class="fas fa-trash-alt me-1"></i>Svuota
-                  </a>
+<a href="javascript:void(0)" class="text-danger d-block mt-3 text-decoration-none text-center" 
+   style="font-size: 0.85rem; font-weight: 700; border: 1px solid #ffcfcf; border-radius: 8px; padding: 5px;" 
+   onClick="event.stopPropagation(); svuotaCarrello()">
+    <i class="fas fa-trash-alt me-1"></i> SVUOTA TUTTO IL CARRELLO
+</a>
               </div>
           </div>
       </div>

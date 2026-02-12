@@ -162,12 +162,12 @@ try {
     $ordine_id = $stmtOrdine->insert_id;
     $stmtOrdine->close();
 
-    // Inserisci righe ordine in ordini_righe (ora includiamo la colonna partecipanti JSON)
+    // Inserisci righe ordine in ordini_righe (incluso lo stato 0: In attesa)
     $sqlRiga = "
         INSERT INTO ordini_righe
-            (ordine_id, piatto_id, nome, prezzo_unitario, quantita, totale_riga, tipo, condivisione, partecipanti)
+            (ordine_id, piatto_id, nome, prezzo_unitario, quantita, totale_riga, tipo, condivisione, partecipanti, stato)
         VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     ";
     $stmtRiga = $conn->prepare($sqlRiga);
     if (!$stmtRiga) {

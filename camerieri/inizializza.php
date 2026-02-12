@@ -24,8 +24,8 @@ $stmt->execute();
 $cameriere = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Ottieni tavoli
-$tavoli = $conn->query("SELECT id, numero, stato FROM tavoli ORDER BY numero");
+// Ottieni tavoli (Ordinamento numerico: 1, 2, 10...)
+$tavoli = $conn->query("SELECT id, numero, stato FROM tavoli ORDER BY CAST(numero AS UNSIGNED) ASC");
 ?>
 
 <!DOCTYPE html>

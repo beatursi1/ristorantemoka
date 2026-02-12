@@ -519,7 +519,7 @@
 
   function creaRigaPiatto(cat, sub, p) {
     const riga = document.createElement('div');
-    riga.className = 'piatto-riga d-flex justify-content-between align-items-start';
+    riga.className = 'piatto-riga d-flex justify-content-between align-items-center';
 
     const colLeft = document.createElement('div');
     const nomePiatto = document.createElement('div');
@@ -538,25 +538,25 @@
     meta.className = 'piatto-meta';
 
     const tempo =
-      typeof p.tempo_preparazione === 'number'
+      (typeof p.tempo_preparazione === 'number' || p.tempo_preparazione)
         ? p.tempo_preparazione + ' min'
         : '';
     const punti =
-      typeof p.punti_fedelta === 'number'
-        ? p.punti_fedelta + ' punti fedeltà'
+      (typeof p.punti_fedelta === 'number' || p.punti_fedelta)
+        ? p.punti_fedelta + ' pt'
         : '';
 
     const parts = [tempo, punti].filter(Boolean);
     if (parts.length) {
-      meta.textContent = parts.join(' • ');
+      meta.innerHTML = '<i class="fas fa-clock me-1"></i> ' + parts.join(' • <i class="fas fa-star text-warning mx-1"></i> ');
       colLeft.appendChild(meta);
     }
 
     if (p.allergeni) {
       const allergeniRow = document.createElement('div');
-      allergeniRow.className = 'piatto-meta';
+      allergeniRow.className = 'piatto-meta text-danger';
       allergeniRow.innerHTML =
-        '<strong>Allergeni:</strong> ' + p.allergeni;
+        '<i class="fas fa-exclamation-triangle me-1"></i> <strong>Allergeni:</strong> ' + p.allergeni;
       colLeft.appendChild(allergeniRow);
     }
 
@@ -572,14 +572,6 @@
       p.prezzo_formattato ||
       (p.prezzo != null ? '€' + Number(p.prezzo).toFixed(2) : '');
     colRight.appendChild(prezzo);
-
-    if (typeof p.punti_fedelta === 'number') {
-      const puntiBadge = document.createElement('div');
-      puntiBadge.className = 'piatto-punti';
-      puntiBadge.textContent =
-        p.punti_fedelta + ' punti (1 punto ogni €)';
-      colRight.appendChild(puntiBadge);
-    }
 
     const toolsRow = document.createElement('div');
     toolsRow.className = 'd-flex align-items-center gap-1 mt-1';
@@ -608,14 +600,14 @@
     btnEditPiatto.type = 'button';
     btnEditPiatto.className = 'btn btn-outline-secondary';
     btnEditPiatto.innerHTML =
-      '<i class="fas fa-pen me-1"></i>Modifica';
+      '<i class="fas fa-pen"></i>';
     tools.appendChild(btnEditPiatto);
 
     const btnDeletePiatto = document.createElement('button');
     btnDeletePiatto.type = 'button';
     btnDeletePiatto.className = 'btn btn-outline-danger';
     btnDeletePiatto.innerHTML =
-      '<i class="fas fa-trash me-1"></i>Elimina';
+      '<i class="fas fa-trash"></i>';
     tools.appendChild(btnDeletePiatto);
 
     // Handler frecce su/giù per piatto
@@ -687,7 +679,7 @@
           typeof p.tempo_preparazione === 'number' &&
           !isNaN(p.tempo_preparazione)
             ? p.tempo_preparazione
-            : '';
+            : (p.tempo_preparazione || '');
       }
 
       if (inputPunti) {
@@ -695,7 +687,7 @@
           typeof p.punti_fedelta === 'number' &&
           !isNaN(p.punti_fedelta)
             ? p.punti_fedelta
-            : '';
+            : (p.punti_fedelta || '');
       }
 
       if (inputAllergeni)
@@ -737,85 +729,54 @@
 
     (data.data || []).forEach(cat => {
       const card = document.createElement('div');
-      card.className = 'categoria-card bg-white';
+      card.className = 'categoria-card bg-white shadow-sm mb-4';
 
       const header = document.createElement('div');
-      header.className = 'categoria-header';
+      header.className = 'categoria-header d-flex justify-content-between align-items-center p-3 text-white';
+      // Nota: lo stile del gradiente viene dal CSS tramite la classe categoria-header
 
       const left = document.createElement('div');
-      const nome = document.createElement('div');
+      const nome = document.createElement('h5');
+      nome.className = 'mb-0 fw-bold text-uppercase';
       nome.innerHTML =
-        '<span class="badge badge-categoria me-2">' +
+        '<span class="badge-categoria me-2">' +
         (cat.id || '?') +
         '</span> ' +
         (cat.nome || 'Categoria senza nome');
       left.appendChild(nome);
-
-      const info = document.createElement('small');
-      const countPiattiSenzaSub = Array.isArray(cat.piatti) ? cat.piatti.length : 0;
-      let countPiattiSub = 0;
-      if (Array.isArray(cat.sottocategorie)) {
-        cat.sottocategorie.forEach(sub => {
-          if (Array.isArray(sub.piatti)) {
-            countPiattiSub += sub.piatti.length;
-          }
-        });
-      }
-      const totPiattiCat = countPiattiSenzaSub + countPiattiSub;
-
-      info.textContent =
-        'Ordine: ' +
-        (cat.ordine || '-') +
-        ' • Piatti totali: ' + totPiattiCat;
-      left.appendChild(info);
       header.appendChild(left);
 
       const right = document.createElement('div');
-      right.className = 'd-flex flex-column align-items-end gap-1';
-
-      const idLine = document.createElement('div');
-      idLine.className = 'small';
-      idLine.textContent = 'ID categoria: ' + (cat.id || '-');
-      right.appendChild(idLine);
-
       const btnBar = document.createElement('div');
-      btnBar.className = 'btn-group btn-group-sm';
-      btnBar.setAttribute('role', 'group');
+      btnBar.className = 'btn-group btn-group-sm shadow-sm';
 
       // frecce categoria
       const btnUp = document.createElement('button');
       btnUp.type = 'button';
-      btnUp.className = 'btn btn-sm btn-move';
+      btnUp.className = 'btn btn-light';
       btnUp.innerHTML = '<i class="fas fa-arrow-up"></i>';
       btnBar.appendChild(btnUp);
 
       const btnDown = document.createElement('button');
       btnDown.type = 'button';
-      btnDown.className = 'btn btn-sm btn-move';
+      btnDown.className = 'btn btn-light';
       btnDown.innerHTML = '<i class="fas fa-arrow-down"></i>';
       btnBar.appendChild(btnDown);
 
       // modifica categoria
       const btnEdit = document.createElement('button');
       btnEdit.type = 'button';
-      btnEdit.className = 'btn btn-sm btn-cat-action';
-      btnEdit.innerHTML = '<i class="fas fa-pen me-1"></i>Modifica';
+      btnEdit.className = 'btn btn-warning';
+      btnEdit.innerHTML = '<i class="fas fa-pen"></i>';
       btnBar.appendChild(btnEdit);
 
       // aggiungi sottocategoria
       const btnAddSub = document.createElement('button');
       btnAddSub.type = 'button';
-      btnAddSub.className = 'btn btn-sm btn-cat-action';
+      btnAddSub.className = 'btn btn-primary';
       btnAddSub.innerHTML =
-        '<i class="fas fa-folder-plus me-1"></i>Aggiungi sottocategoria';
+        '<i class="fas fa-folder-plus"></i>';
       btnBar.appendChild(btnAddSub);
-
-      // elimina categoria (non implementato a DB per ora)
-      const btnDelete = document.createElement('button');
-      btnDelete.type = 'button';
-      btnDelete.className = 'btn btn-sm btn-outline-danger';
-      btnDelete.innerHTML = '<i class="fas fa-trash me-1"></i>Elimina';
-      btnBar.appendChild(btnDelete);
 
       // handler sposta categoria
       btnUp.addEventListener('click', async () => {
@@ -829,145 +790,56 @@
       btnEdit.addEventListener('click', () => {
         const modalEl = document.getElementById('modalModificaCategoria');
         if (!modalEl) return;
-
         const inputId = document.getElementById('mod-cat-id');
         const inputNome = document.getElementById('mod-cat-nome');
         const inputVisibile = document.getElementById('mod-cat-visibile');
-        const msgEl = document.getElementById('mod-cat-msg');
-
-        if (msgEl) {
-          msgEl.textContent = '';
-          msgEl.className = 'small mt-1';
-        }
-
         if (inputId) inputId.value = cat.id || '';
         if (inputNome) inputNome.value = cat.nome || '';
-        if (inputVisibile) {
-          inputVisibile.checked = cat.visibile === undefined
-            ? true
-            : !!cat.visibile;
-        }
-
-        const bsModal = new bootstrap.Modal(modalEl);
-        bsModal.show();
+        if (inputVisibile) inputVisibile.checked = cat.visibile === undefined ? true : !!cat.visibile;
+        new bootstrap.Modal(modalEl).show();
       });
 
       // handler Aggiungi sottocategoria
       btnAddSub.addEventListener('click', () => {
         const modalEl = document.getElementById('modalNuovaSottocategoria');
         if (!modalEl) return;
-
         const inputCatId = document.getElementById('new-sub-cat-id');
-        const inputNome = document.getElementById('new-sub-nome');
-        const inputVisibile = document.getElementById('new-sub-visibile');
-        const msgEl = document.getElementById('new-sub-msg');
-
-        if (msgEl) {
-          msgEl.textContent = '';
-          msgEl.className = 'small mt-1';
-        }
-
         if (inputCatId) inputCatId.value = cat.id || '';
-        if (inputNome) inputNome.value = '';
-        if (inputVisibile) inputVisibile.checked = true;
-
-        const bsModal = new bootstrap.Modal(modalEl);
-        bsModal.show();
+        new bootstrap.Modal(modalEl).show();
       });
 
       right.appendChild(btnBar);
       header.appendChild(right);
-
       card.appendChild(header);
 
       const piattiWrapper = document.createElement('div');
 
       // Piatti senza sottocategoria
       if (Array.isArray(cat.piatti) && cat.piatti.length) {
-        const bloccoNoSub = document.createElement('div');
-        bloccoNoSub.className = 'mb-3';
-
-        const titoloNoSub = document.createElement('div');
-        titoloNoSub.className = 'd-flex justify-content-between align-items-center mb-2';
-
-        const labelNoSub = document.createElement('h6');
-        labelNoSub.className = 'text-muted mb-0';
-        labelNoSub.textContent = 'Piatti senza sottocategoria';
-        titoloNoSub.appendChild(labelNoSub);
-
-        bloccoNoSub.appendChild(titoloNoSub);
-
         cat.piatti.forEach(p => {
           const riga = creaRigaPiatto(cat, null, p);
-          bloccoNoSub.appendChild(riga);
+          piattiWrapper.appendChild(riga);
         });
-
-        piattiWrapper.appendChild(bloccoNoSub);
       }
 
       // Piatti con sottocategoria
       if (Array.isArray(cat.sottocategorie) && cat.sottocategorie.length) {
         cat.sottocategorie.forEach(sub => {
-          const bloccoSub = document.createElement('div');
-          bloccoSub.className = 'mb-3';
-
-          const headerSub = document.createElement('div');
-          headerSub.className = 'd-flex justify-content-between align-items-center mb-2';
-
-          const titoloSub = document.createElement('h6');
-          titoloSub.className = 'mb-0';
-          titoloSub.textContent =
-            (sub.nome || 'Sottocategoria') +
-            (sub.ordine ? ' (ordine ' + sub.ordine + ')' : '');
-          headerSub.appendChild(titoloSub);
-
-          const toolsSub = document.createElement('div');
-          toolsSub.className = 'btn-group btn-group-sm';
-
-          const btnSubUp = document.createElement('button');
-          btnSubUp.type = 'button';
-          btnSubUp.className = 'btn btn-sm btn-move';
-          btnSubUp.innerHTML = '<i class="fas fa-arrow-up"></i>';
-          toolsSub.appendChild(btnSubUp);
-
-          const btnSubDown = document.createElement('button');
-          btnSubDown.type = 'button';
-          btnSubDown.className = 'btn btn-sm btn-move';
-          btnSubDown.innerHTML = '<i class="fas fa-arrow-down"></i>';
-          toolsSub.appendChild(btnSubDown);
-
-          btnSubUp.addEventListener('click', async () => {
-            await spostaSottocategoria(cat.id, sub.id, -1);
-          });
-          btnSubDown.addEventListener('click', async () => {
-            await spostaSottocategoria(cat.id, sub.id, +1);
-          });
-
-          headerSub.appendChild(toolsSub);
-          bloccoSub.appendChild(headerSub);
-
+          const subH = document.createElement('div');
+          subH.className = 'sottocategoria-block-header d-flex justify-content-between align-items-center p-2 px-3';
+          subH.innerHTML = `<h6><i class="fas fa-level-up-alt fa-rotate-90 me-2 text-muted"></i>${sub.nome}</h6>
+          <div class="btn-group btn-group-sm shadow-sm">
+            <button class="btn btn-move" onclick="window._spostaSub(${cat.id}, ${sub.id}, -1)"><i class="fas fa-chevron-up"></i></button>
+            <button class="btn btn-move" onclick="window._spostaSub(${cat.id}, ${sub.id}, 1)"><i class="fas fa-chevron-down"></i></button>
+          </div>`;
+          piattiWrapper.appendChild(subH);
           if (Array.isArray(sub.piatti) && sub.piatti.length) {
             sub.piatti.forEach(p => {
               const riga = creaRigaPiatto(cat, sub, p);
-              bloccoSub.appendChild(riga);
+              piattiWrapper.appendChild(riga);
             });
-          } else {
-            const vuotoSub = document.createElement('div');
-            vuotoSub.className = 'p-2 text-muted small';
-            vuotoSub.textContent = 'Nessun piatto in questa sottocategoria.';
-            bloccoSub.appendChild(vuotoSub);
           }
-
-          piattiWrapper.appendChild(bloccoSub);
         });
-      }
-
-      if (!totPiattiCat) {
-        const vuoto = document.createElement('div');
-        vuoto.className = 'p-3 text-muted';
-        vuoto.textContent =
-          'Nessun piatto presente in questa categoria.';
-        piattiWrapper.appendChild(vuoto);
       }
 
       card.appendChild(piattiWrapper);
@@ -980,6 +852,8 @@
         el.textContent = 'Ultimo aggiornamento: ' + data.timestamp;
       }
     }
+    // Espongo la funzione spostaSub globalmente per i pulsanti inline
+    window._spostaSub = spostaSottocategoria;
   }
 
   // --- FORM AGGIUNGI PIATTO -------------------------------------------------

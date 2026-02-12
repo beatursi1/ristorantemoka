@@ -24,11 +24,7 @@
             margin-bottom: 20px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s;
             border-left: 5px solid #3498db;
-        }
-        .ordine-card:hover {
-            transform: translateY(-3px);
         }
         .ordine-header {
             background: #2c3e50;
@@ -39,49 +35,34 @@
             align-items: center;
         }
         .ordine-body {
-            padding: 15px;
+            padding: 10px;
         }
         .piatto-item {
-            padding: 10px 0;
-            border-bottom: 1px dashed #eee;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-        .piatto-item:last-child {
-            border-bottom: none;
-        }
-        .stato-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.8em;
-        }
-        .stato-attesa { background: #f39c12; color: white; }
-        .stato-preparazione { background: #3498db; color: white; }
-        .stato-pronto { background: #27ae60; color: white; }
-        .btn-azione {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: background 0.2s;
+            border-radius: 8px;
+            margin-bottom: 4px;
         }
-        .btn-inizia { background: #3498db; color: white; }
-        .btn-inizia:hover { background: #2980b9; }
-        .btn-pronto { background: #27ae60; color: white; }
-        .btn-pronto:hover { background: #219653; }
-        .btn-consegnato { background: #7f8c8d; color: white; }
-        .btn-consegnato:hover { background: #5d6d7e; }
-        .timer {
-            font-family: monospace;
-            background: #2c3e50;
-            color: #f1c40f;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
+        .piatto-item:hover { background: #f8f9fa; }
+        .piatto-item.piatto-attesa { border-left: 5px solid #f39c12; }
+        .piatto-item.piatto-preparazione { border-left: 5px solid #3498db; background: #ebf5ff; }
+        .piatto-item.piatto-pronto { border-left: 5px solid #27ae60; background: #eafff2; opacity: 0.8; }
+        
+        /* Animazione Urgenza per singolo piatto */
+        .piatto-urgente-anim {
+            animation: pulse-red 1.5s infinite;
+            background: #fff5f5 !important;
         }
+        @keyframes pulse-red {
+            0% { box-shadow: inset 0 0 0 0px rgba(231, 76, 60, 0.4); }
+            100% { box-shadow: inset 0 0 0 10px rgba(231, 76, 60, 0); }
+        }
+
         .stato-colonna {
             background: rgba(255,255,255,0.05);
             border-radius: 10px;
@@ -98,357 +79,243 @@
         #in-attesa-titolo { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
         #in-preparazione-titolo { background: rgba(52, 152, 219, 0.2); color: #3498db; }
         #pronto-titolo { background: rgba(39, 174, 96, 0.2); color: #27ae60; }
-        .aggiorna-btn {
+
+        .riepilogo-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .totale-item {
+            background: #fff;
+            color: #1a1a2e;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #sidebar-archivio {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 24px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1000;
+            right: -350px;
+            top: 0;
+            width: 350px;
+            height: 100%;
+            background: #2c3e50;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+            z-index: 1060;
+            padding: 20px;
+            overflow-y: auto;
         }
-        .aggiorna-btn:hover {
-            background: #c0392b;
-            transform: scale(1.1);
-        }
+        #sidebar-archivio.open { right: 0; }
+        
+        .aggiorna-btn { position: fixed; bottom: 20px; right: 20px; background: #e74c3c; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; z-index: 1000; cursor: pointer; }
+        .btn-archivio { position: fixed; bottom: 100px; right: 20px; background: #34495e; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; z-index: 1000; cursor: pointer; }
     </style>
 </head>
 <body>
-    <!-- Header -->
+
     <div class="header">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-8">
                     <h1 class="h3 mb-1"><i class="fas fa-utensils me-2"></i>CUCINA RISTORANTEMOKA</h1>
-                    <p class="mb-0 opacity-75">Monitor ordini in tempo reale</p>
+                    <p class="mb-0 opacity-75">Monitor piatti in tempo reale</p>
                 </div>
                 <div class="col-4 text-end">
                     <div class="d-inline-block bg-dark px-3 py-2 rounded">
-                        <i class="fas fa-clock me-2"></i>
-                        <span id="orario">--:--:--</span>
+                        <i class="fas fa-clock me-2 text-warning"></i><span id="orario">--:--:--</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Contenuto principale -->
-    <div class="container mt-4">
+    <div class="container mt-3 px-4">
+        <div id="box-totali" class="riepilogo-box">
+            <div class="text-white w-100 mb-1 small fw-bold text-uppercase" style="opacity: 0.8;"><i class="fas fa-list-ul me-2"></i>Riepilogo piatti da preparare:</div>
+        </div>
+        
         <div class="row">
-            <!-- Colonna 1: IN ATTESA -->
             <div class="col-md-4">
                 <div class="stato-colonna">
-                    <h3 class="colonna-titolo" id="in-attesa-titolo">
-                        <i class="fas fa-clock me-2"></i>IN ATTESA
-                        <span class="badge bg-warning ms-2" id="count-attesa">0</span>
-                    </h3>
-                    <div id="ordini-attesa">
-                        <!-- Ordini in attesa appariranno qui -->
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-check-circle fa-2x mb-3"></i>
-                            <p>Nessun ordine in attesa</p>
-                        </div>
-                    </div>
+                    <h3 class="colonna-titolo" id="in-attesa-titolo">IN ATTESA <span class="badge bg-warning ms-2" id="count-attesa">0</span></h3>
+                    <div id="ordini-attesa"></div>
                 </div>
             </div>
-
-            <!-- Colonna 2: IN PREPARAZIONE -->
             <div class="col-md-4">
                 <div class="stato-colonna">
-                    <h3 class="colonna-titolo" id="in-preparazione-titolo">
-                        <i class="fas fa-blender me-2"></i>IN PREPARAZIONE
-                        <span class="badge bg-primary ms-2" id="count-preparazione">0</span>
-                    </h3>
-                    <div id="ordini-preparazione">
-                        <!-- Ordini in preparazione appariranno qui -->
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-utensils fa-2x mb-3"></i>
-                            <p>Nessun ordine in preparazione</p>
-                        </div>
-                    </div>
+                    <h3 class="colonna-titolo" id="in-preparazione-titolo">IN PREPARAZIONE <span class="badge bg-primary ms-2" id="count-preparazione">0</span></h3>
+                    <div id="ordini-preparazione"></div>
                 </div>
             </div>
-
-            <!-- Colonna 3: PRONTO -->
             <div class="col-md-4">
                 <div class="stato-colonna">
-                    <h3 class="colonna-titolo" id="pronto-titolo">
-                        <i class="fas fa-bell me-2"></i>PRONTO
-                        <span class="badge bg-success ms-2" id="count-pronto">0</span>
-                    </h3>
-                    <div id="ordini-pronto">
-                        <!-- Ordini pronti appariranno qui -->
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-concierge-bell fa-2x mb-3"></i>
-                            <p>Nessun ordine pronto</p>
-                        </div>
-                    </div>
+                    <h3 class="colonna-titolo" id="pronto-titolo">PRONTO <span class="badge bg-success ms-2" id="count-pronto">0</span></h3>
+                    <div id="ordini-pronto"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Pulsante aggiorna -->
-    <button class="aggiorna-btn" onClick="caricaOrdini()" title="Aggiorna ordini">
-        <i class="fas fa-sync-alt"></i>
-    </button>
+    <button class="aggiorna-btn" onClick="caricaOrdini()"><i class="fas fa-sync-alt"></i></button>
+    <button class="btn-archivio" onClick="toggleArchivio()"><i class="fas fa-history"></i></button>
 
-    <!-- Script -->
+    <div id="sidebar-archivio">
+        <div class="d-flex justify-content-between align-items-center mb-4 text-white">
+            <h4 class="mb-0">Serviti (Ultima ora)</h4>
+            <button class="btn btn-sm btn-outline-light" onClick="toggleArchivio()">Chiudi</button>
+        </div>
+        <div id="lista-archivio"></div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Variabili globali
         const API_BASE = '../api/';
-        let tuttiOrdini = [];
+        let tuttiPiatti = [];
         
-        // Carica ordini all'avvio e ogni 30 secondi
         window.onload = function() {
             aggiornaOrario();
             caricaOrdini();
             setInterval(aggiornaOrario, 1000);
-            setInterval(caricaOrdini, 5000); // Aggiorna ogni 5 secondi
-			// Refresh visivo ogni secondo per i timer
+            setInterval(caricaOrdini, 10000); 
             setInterval(aggiornaTimerOrdini, 1000);
         };
         
-        // Funzione per aggiornare l'orario
         function aggiornaOrario() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('it-IT');
-            document.getElementById('orario').textContent = timeString;
+            document.getElementById('orario').textContent = new Date().toLocaleTimeString('it-IT');
         }
         
-        // Funzione per caricare gli ordini dall'API
         async function caricaOrdini() {
             try {
                 const response = await fetch(API_BASE + 'ordini/ordini-cucina.php');
                 const data = await response.json();
-                
                 if (data.success) {
-                    tuttiOrdini = data.data;
-                    mostraOrdiniPerStato(tuttiOrdini);
+                    tuttiPiatti = data.data;
+                    const attivi = tuttiPiatti.filter(p => parseInt(p.piatto_stato) < 3);
+                    const archivio = tuttiPiatti.filter(p => parseInt(p.piatto_stato) === 3);
                     
-                    // Aggiorna contatori
-                    document.getElementById('count-attesa').textContent = 
-                        data.data.filter(o => o.stato === 'attesa').length;
-                    document.getElementById('count-preparazione').textContent = 
-                        data.data.filter(o => o.stato === 'in_preparazione').length;
-                    document.getElementById('count-pronto').textContent = 
-                        data.data.filter(o => o.stato === 'pronto').length;
+                    mostraOrdiniPerStato(attivi);
+                    aggiornaTotali(attivi);
+                    mostraArchivio(archivio);
+                    
+                    document.getElementById('count-attesa').textContent = attivi.filter(p => parseInt(p.piatto_stato) === 0).length;
+                    document.getElementById('count-preparazione').textContent = attivi.filter(p => parseInt(p.piatto_stato) === 1).length;
+                    document.getElementById('count-pronto').textContent = attivi.filter(p => parseInt(p.piatto_stato) === 2).length;
                 }
-            } catch (error) {
-                console.error('Errore nel caricamento ordini:', error);
-            }
+            } catch (error) { console.error('Errore:', error); }
         }
         
-        // Funzione per mostrare gli ordini divisi per stato
-        function mostraOrdiniPerStato(ordini) {
-            const stati = {
-                'attesa': document.getElementById('ordini-attesa'),
-                'in_preparazione': document.getElementById('ordini-preparazione'),
-                'pronto': document.getElementById('ordini-pronto')
-            };
-            
-            // Svuota tutte le colonne
-            Object.values(stati).forEach(colonna => {
-                colonna.innerHTML = '';
+        function mostraOrdiniPerStato(piatti) {
+            const c0 = document.getElementById('ordini-attesa'), c1 = document.getElementById('ordini-preparazione'), c2 = document.getElementById('ordini-pronto');
+            c0.innerHTML = ''; c1.innerHTML = ''; c2.innerHTML = '';
+
+            const tavoli = {};
+            piatti.forEach(p => {
+                if (!tavoli[p.tavolo_numero]) tavoli[p.tavolo_numero] = { numero: p.tavolo_numero, piatti: [] };
+                tavoli[p.tavolo_numero].piatti.push(p);
             });
-            
-            if (ordini.length === 0) {
-                Object.values(stati).forEach(colonna => {
-                    colonna.innerHTML = `
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-check-circle fa-2x mb-3"></i>
-                            <p>Nessun ordine</p>
-                        </div>
-                    `;
-                });
-                return;
-            }
-            
-            // Raggruppa ordini per tavolo e sessione
-            const ordiniRaggruppati = {};
-            
-            ordini.forEach(ordine => {
-                const key = `${ordine.tavolo_id}-${ordine.session_id}`;
-                if (!ordiniRaggruppati[key]) {
-                    ordiniRaggruppati[key] = {
-                        tavolo_id: ordine.tavolo_id,
-                        session_id: ordine.session_id,
-                        created_at: ordine.created_at,
-                        stato: ordine.stato,
-                        piatti: []
-                    };
-                }
-                ordiniRaggruppati[key].piatti.push({
-                    nome: ordine.piatto_nome,
-                    quantita: ordine.quantita,
-                    note: ordine.note
+
+            // BUG 1 FIXED: Ordinamento numerico dei tavoli
+            const tavoliOrdinati = Object.keys(tavoli).sort((a, b) => parseInt(a) - parseInt(b));
+
+            tavoliOrdinati.forEach(num => {
+                [0, 1, 2].forEach(st => {
+                    const filtered = tavoli[num].piatti.filter(p => parseInt(p.piatto_stato) === st);
+                    if (filtered.length > 0) {
+                        const target = st === 0 ? c0 : (st === 1 ? c1 : c2);
+                        target.innerHTML += creaCardTavolo(num, filtered, st);
+                    }
                 });
             });
-            
-            // Mostra gli ordini raggruppati nelle colonne corrette
-            Object.values(ordiniRaggruppati).forEach(ordine => {
-                const tempoTrascorso = calcolaTempoTrascorso(ordine.created_at);
-                
-                const cardHTML = `
-                    <div class="ordine-card" id="ordine-${ordine.tavolo_id}-${ordine.session_id}">
-                        <div class="ordine-header">
-                            <div>
-                                <strong><i class="fas fa-table me-1"></i>TAVOLO ${ordine.tavolo_id}</strong>
-                                <div class="mt-1">
-                                    <span class="timer">${tempoTrascorso}</span>
-                                    <span class="stato-badge stato-${ordine.stato.replace('_', '-')} ms-2">
-                                        ${statoTestuale(ordine.stato)}
-                                    </span>
+        }
+
+        function creaCardTavolo(tavolo, piatti, stato) {
+            return `
+                <div class="ordine-card">
+                    <div class="ordine-header"><strong>TAVOLO ${tavolo}</strong></div>
+                    <div class="ordine-body">
+                        ${piatti.map(p => {
+                            const min = Math.floor((new Date() - new Date(p.data_ordine)) / 60000);
+                            const urgenteClass = (min >= 20 && stato < 2) ? 'piatto-urgente-anim' : '';
+                            return `
+                            <div class="piatto-item piatto-${getStatoClass(p.piatto_stato)} ${urgenteClass}" 
+                                 data-data-ordine="${p.data_ordine}"
+                                 onclick="prossimoStato(${p.riga_id}, ${p.piatto_stato})">
+                                <div style="flex:1">
+                                    <div class="fw-bold text-uppercase" style="font-size:0.85rem">${p.piatto_nome}</div>
+<small class="text-secondary">${p.cliente_nome ? p.cliente_nome + ' (' + p.cliente_lettera + ')' : 'Cliente ' + p.cliente_lettera}</small>
                                 </div>
-                            </div>
-                            <div class="text-end">
-                                <small>${formattaData(ordine.created_at)}</small>
-                            </div>
-                        </div>
-                        <div class="ordine-body">
-                            ${ordine.piatti.map(piatto => `
-                                <div class="piatto-item">
-                                    <div>
-                                        <strong>${piatto.nome}</strong>
-                                        ${piatto.note ? `<br><small class="text-muted">Nota: ${piatto.note}</small>` : ''}
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge bg-dark">x${piatto.quantita}</span>
-                                    </div>
+                                <div class="text-end">
+                                    <span class="badge bg-dark">x${p.quantita}</span><br>
+                                    <span class="timer-piatto small fw-bold text-warning">${min}m</span>
                                 </div>
-                            `).join('')}
-                            <div class="mt-3 pt-2 border-top">
-                                ${getPulsantiAzione(ordine.stato, ordine.tavolo_id, ordine.session_id)}
-                            </div>
-                        </div>
+                            </div>`;
+                        }).join('')}
                     </div>
-                `;
-                
-                // Aggiungi alla colonna corretta
-                stati[ordine.stato].innerHTML += cardHTML;
-            });
+                </div>`;
         }
-        
-        // Funzione per calcolare il tempo trascorso
-        function calcolaTempoTrascorso(dataString) {
-            const ordineTime = new Date(dataString);
-            const now = new Date();
-            const diffMs = now - ordineTime;
-            const diffMins = Math.floor(diffMs / 60000);
-            
-            if (diffMins < 60) {
-                return `${diffMins} min`;
-            } else {
-                const hours = Math.floor(diffMins / 60);
-                const mins = diffMins % 60;
-                return `${hours}h ${mins}m`;
-            }
-        }
-        
-        // Funzione per formattare la data
-        function formattaData(dataString) {
-            const date = new Date(dataString);
-            return date.toLocaleTimeString('it-IT', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
-        
-        // Funzione per tradurre lo stato
-        function statoTestuale(stato) {
-            const traduzioni = {
-                'attesa': 'IN ATTESA',
-                'in_preparazione': 'IN PREPARAZIONE',
-                'pronto': 'PRONTO',
-                'consegnato': 'CONSEGNATO'
-            };
-            return traduzioni[stato] || stato;
-        }
-        
-        // Funzione per generare i pulsanti azione
-        function getPulsantiAzione(stato, tavoloId, sessionId) {
-            switch(stato) {
-                case 'attesa':
-                    return `<button class="btn-azione btn-inizia w-100" 
-                            onclick="cambiaStatoOrdine(${tavoloId}, '${sessionId}', 'in_preparazione')">
-                            <i class="fas fa-play me-2"></i>INIZIA PREPARAZIONE
-                        </button>`;
-                
-                case 'in_preparazione':
-                    return `<button class="btn-azione btn-pronto w-100" 
-                            onclick="cambiaStatoOrdine(${tavoloId}, '${sessionId}', 'pronto')">
-                            <i class="fas fa-check me-2"></i>MARCHIA COME PRONTO
-                        </button>`;
-                
-                case 'pronto':
-                    return `<button class="btn-azione btn-consegnato w-100" 
-                            onclick="cambiaStatoOrdine(${tavoloId}, '${sessionId}', 'consegnato')">
-                            <i class="fas fa-check-double me-2"></i>CONSEGNATO AL CLIENTE
-                        </button>`;
-                
-                default:
-                    return '';
-            }
-        }
-        
-        // Funzione per cambiare stato ordine
-        async function cambiaStatoOrdine(tavoloId, sessionId, nuovoStato) {
-            if (!confirm(`Confermi di voler cambiare lo stato dell'ordine del Tavolo ${tavoloId} a "${statoTestuale(nuovoStato)}"?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_BASE + 'ordini/cambia-stato-ordine.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        tavolo_id: tavoloId,
-                        session_id: sessionId,
-                        nuovo_stato: nuovoStato
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(`Stato ordine aggiornato a: ${statoTestuale(nuovoStato)}`);
-                    caricaOrdini(); // Ricarica gli ordini
-                } else {
-                    alert('Errore: ' + data.error);
+
+        function aggiornaTimerOrdini() {
+            document.querySelectorAll('.piatto-item').forEach(item => {
+                const dataStr = item.getAttribute('data-data-ordine');
+                const timerSpan = item.querySelector('.timer-piatto');
+                if (dataStr && timerSpan) {
+                    const min = Math.floor((new Date() - new Date(dataStr)) / 60000);
+                    timerSpan.textContent = min + 'm';
+                    if (min >= 20 && !item.classList.contains('piatto-urgente-anim')) {
+                        item.classList.add('piatto-urgente-anim');
+                    }
                 }
-            } catch (error) {
-                alert('Errore di connessione: ' + error.message);
-            }
+            });
         }
-		// Funzione per aggiornare i timer in tempo reale
-function aggiornaTimerOrdini() {
-    document.querySelectorAll('.ordine-card').forEach(card => {
-        const timerElement = card.querySelector('.timer');
-        if (timerElement) {
-            // Estrai l'ID ordine dal card
-            const cardId = card.id.replace('ordine-', '');
-            const [tavoloId, sessionId] = cardId.split('-');
+
+        function aggiornaTotali(piatti) {
+            const box = document.getElementById('box-totali');
+            const daFare = piatti.filter(p => parseInt(p.piatto_stato) < 2);
+            const conteggio = {};
+            daFare.forEach(p => { conteggio[p.piatto_nome] = (conteggio[p.piatto_nome] || 0) + parseInt(p.quantita); });
             
-            // Trova l'ordine corrispondente
-            const ordine = tuttiOrdini.find(o => 
-                o.tavolo_id == tavoloId && o.session_id == sessionId
-            );
-            
-            if (ordine) {
-                timerElement.textContent = calcolaTempoTrascorso(ordine.created_at);
-            }
+            const titolo = box.querySelector('.text-white');
+            box.innerHTML = ''; if (titolo) box.appendChild(titolo);
+            Object.entries(conteggio).forEach(([nome, qta]) => {
+                const el = document.createElement('div'); el.className = 'totale-item';
+                el.innerHTML = `<span class="text-danger">${qta}</span> ${nome}`; box.appendChild(el);
+            });
         }
-    });
-}
+
+        function mostraArchivio(piatti) {
+            const container = document.getElementById('lista-archivio');
+            container.innerHTML = '';
+            if (piatti.length === 0) { container.innerHTML = '<p class="text-white-50 small text-center mt-4">Nessun piatto servito.</p>'; return; }
+            piatti.reverse().forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'p-2 mb-2 bg-white rounded text-dark d-flex justify-content-between align-items-center';
+                item.innerHTML = `<div><strong>${p.piatto_nome}</strong> (Tav. ${p.tavolo_numero})</div>
+                    <button class="btn btn-sm btn-primary py-0" onclick="prossimoStato(${p.riga_id}, 2, true)"><i class="fas fa-undo"></i></button>`;
+                container.appendChild(item);
+            });
+        }
+
+        function toggleArchivio() { document.getElementById('sidebar-archivio').classList.toggle('open'); }
+        function getStatoClass(s) { return ['attesa', 'preparazione', 'pronto'][s] || 'attesa'; }
+
+        async function prossimoStato(rigaId, attuale, isUndo = false) {
+            const nuovo = isUndo ? 2 : parseInt(attuale) + 1;
+            if (nuovo > 3) return;
+            try {
+                const resp = await fetch(API_BASE + 'ordini/cambia-stato-piatto.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ riga_id: rigaId, nuovo_stato: nuovo })
+                });
+                if ((await resp.json()).success) caricaOrdini();
+            } catch (e) { console.error(e); }
+        }
     </script>
 </body>
 </html>
