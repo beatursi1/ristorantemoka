@@ -1,0 +1,84 @@
+ /*inizializza.css */
+ <style>
+        body { background-color: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #2c3e50, #4a6491); color: white; padding: 20px 0; }
+        .tavolo-card { cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .tavolo-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .tavolo-card.selected { border-color: #3498db; background-color: #e8f4fc; }
+        .tavolo-libero { background-color: #e8f5e8; }
+        .tavolo-occupato { background-color: #fde8e8; }
+        .cliente-badge { 
+            width: 40px; height: 40px; line-height: 40px; text-align: center; 
+            border-radius: 50%; font-weight: bold; margin: 5px; cursor: pointer;
+            display: inline-block;
+        }
+        .cliente-attivo { box-shadow: 0 0 0 3px #2c3e50; }
+        .cliente-registrato { box-shadow: 0 0 0 3px #27ae60; }
+        .badge-a, .badge-b, .badge-c, .badge-d, .badge-e, .badge-f, .badge-extra { 
+    background: #000000;  /* Nero per non registrati */
+    color: white; 
+}
+.badge-a.cliente-registrato, 
+.badge-b.cliente-registrato, 
+.badge-c.cliente-registrato, 
+.badge-d.cliente-registrato, 
+.badge-e.cliente-registrato, 
+.badge-f.cliente-registrato,
+.badge-extra.cliente-registrato { 
+    background: #dc3545;  /* Rosso Bootstrap per registrati */
+    color: white; 
+}
+        #qr-code-container { min-height: 250px; }
+        .cliente-extra-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .contatore-quantita {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .contatore-quantita .btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bevanda-item {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bevanda-item:hover {
+            background: #f8f9fa;
+        }
+        .monitor-clienti {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .cliente-monitor {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #3498db;
+        }
+        .cliente-monitor.registrato { border-left-color: #27ae60; }
+    </style>

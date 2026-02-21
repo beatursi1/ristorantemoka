@@ -1,0 +1,1503 @@
+﻿// menu.js
+// ================= VARIABLI GLOBALI =================
+// Single source-of-truth per il carrello: variabile interna + window.carrello getter/setter
+let carrello = (Array.isArray(window.carrello) ? window.carrello : (window.carrello || []));
+try {
+  Object.defineProperty(window, 'carrello', {
+    configurable: true,
+    enumerable: true,
+    get: function() { return carrello; },
+    set: function(v) { carrello = v; }
+  });
+} catch (e) {
+  // se defineProperty non ├¿ permesso, cade back al valore semplice (meno ideale ma compatibile)
+  window.carrello = carrello;
+}
+
+let parametriUrl = {};
+window.arrivaDaCameriere = false; // <<< AGGIUNTA: flag globale
+// Event delegations moved to menu-events.js
+if (window.EventDelegator && typeof window.EventDelegator.init === 'function') {
+  try { window.EventDelegator.init(); } catch (e) { console.error('EventDelegator.init error', e); }
+} else {
+  // Se menu-events.js verr├á caricato dopo menu.js, segnaliamo che l'init ├¿ pendente:
+  window._menu_events_init_pending = true;
+}
+// Modals logic moved to menu-modals.js
+if (window.MenuModals && typeof window.MenuModals.init === 'function') {
+  try { window.MenuModals.init(); } catch (e) { console.error('MenuModals.init error', e); }
+} else {
+  // Se menu-modals.js verr├á caricato dopo menu.js, segnaliamo che l'init ├¿ pendente:
+  window._menu_modals_init_pending = true;
+}
+// Legge parametri dalla URL e registra automaticamente il cliente
+async function leggereParametriUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    const sessioneToken = urlParams.get('sessione');
+    const tavoloParam = urlParams.get('tavolo');
+    const clienteDaCameriere = urlParams.get('cliente');              // es. "B"
+    const sessioneClienteId = urlParams.get('sessione_cliente_id');   // id da sessioni_clienti
+
+    // Flag: arrivo dal cameriere se ho cliente o sessione_cliente_id  <<< AGGIUNTA
+    window.arrivaDaCameriere = !!clienteDaCameriere || !!sessioneClienteId;
+
+    // Base: proviamo a usare prima la sessione, altrimenti tavolo
+    parametriUrl = {
+        sessione: sessioneToken || null,
+        tavolo: tavoloParam || null,
+        cliente: null,
+        session_id: null,             // compatibilit├á interna (vecchio nome)
+        sessione_cliente_id: sessioneClienteId || null, // nuovo campo esplicito dal parametro URL
+        tavolo_numero: null
+    };
+    // Se arrivo dal cameriere con un cliente gi├á noto (cliente + sessione_cliente_id),
+    // imposto direttamente questi parametri e salto la registrazione automatica.
+    if (clienteDaCameriere && sessioneClienteId) {
+        parametriUrl.cliente = clienteDaCameriere;
+        parametriUrl.session_id = sessioneClienteId;            // compatibilit├á interna
+        parametriUrl.sessione_cliente_id = sessioneClienteId;   // nuovo campo esplicito
+
+        // Aggiorna subito la UI cliente corrente
+        const cc = document.getElementById('cliente-corrente');
+        const ccc = document.getElementById('cliente-corrente-container');
+        if (cc) cc.textContent = clienteDaCameriere;
+        if (ccc) ccc.style.display = 'inline';
+
+        // Salva anche in un oggetto temporaneo per essere persistito dopo la creazione di chiaveStorage
+        parametriUrl._cliente_prefill = {
+            lettera: clienteDaCameriere,
+            session_id: sessioneClienteId,
+            sessione_cliente_id: sessioneClienteId,
+            timestamp: Date.now()
+        };
+    }
+
+    // Se abbiamo un token di sessione ma non il tavolo, chiediamo al server
+    if (parametriUrl.sessione && !parametriUrl.tavolo) {
+        try {
+            const resp = await fetch('../api/tavoli/sessione-info.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sessione_token: parametriUrl.sessione })
+            });
+
+            const info = await resp.json();
+            if (info.success) {
+                parametriUrl.tavolo = info.tavolo_id ? String(info.tavolo_id) : null;
+                parametriUrl.tavolo_numero = info.tavolo_numero || null;
+            } else {
+                console.warn('Sessione non valida o non trovata:', info.error);
+            }
+        } catch (e) {
+            console.error('Errore richiesta sessione-info:', e);
+        }
+    }
+
+    // Aggiorna visualizzazione numero tavolo
+    try {
+        const tavoloNumeroEl = document.getElementById('tavolo-numero');
+        if (parametriUrl.tavolo_numero && tavoloNumeroEl) {
+            tavoloNumeroEl.textContent = parametriUrl.tavolo_numero;
+        } else if (parametriUrl.tavolo && tavoloNumeroEl) {
+            tavoloNumeroEl.textContent = parametriUrl.tavolo;
+        } else if (tavoloNumeroEl) {
+            tavoloNumeroEl.textContent = '--';
+        }
+    } catch (e) { /* ignore */ }
+    
+    // Nascondi temporaneamente il cliente corrente
+    try { document.getElementById('cliente-corrente-container').style.display = 'none'; } catch(e){}
+
+    // Chiave per localStorage: se abbiamo la sessione, usiamo quella; altrimenti il tavolo
+    let chiaveStorage = null;
+    if (parametriUrl.sessione) {
+        chiaveStorage = 'cliente_sessione_' + parametriUrl.sessione;
+    } else if (parametriUrl.tavolo) {
+        chiaveStorage = 'cliente_tavolo_' + parametriUrl.tavolo;
+    }
+
+    // 1) Se abbiamo gi├á un cliente precompilato dal cameriere (cliente + sessione_cliente_id),
+    //    usiamo quello e salviamo in localStorage, poi usciamo.
+        if (parametriUrl._cliente_prefill && chiaveStorage) {
+        const dati = parametriUrl._cliente_prefill;
+
+        parametriUrl.cliente = dati.lettera;
+        parametriUrl.session_id = dati.session_id || null;
+        parametriUrl.sessione_cliente_id = dati.sessione_cliente_id || dati.session_id || null;
+
+        // Aggiorna DOM (compatibile con vecchio #cliente-corrente e con #cliente-corrente-letter / #cliente-corrente-nome)
+        try {
+            if (document.getElementById('cliente-corrente-letter')) document.getElementById('cliente-corrente-letter').textContent = dati.lettera;
+            else if (document.getElementById('cliente-corrente')) document.getElementById('cliente-corrente').textContent = dati.lettera;
+
+            if (document.getElementById('cliente-corrente-nome')) {
+                document.getElementById('cliente-corrente-nome').textContent = dati.nome || dati.lettera || '--';
+            }
+            try { document.getElementById('cliente-corrente-container').style.display = 'inline'; } catch(e){}
+        } catch(e){}
+
+        try { localStorage.setItem(chiaveStorage, JSON.stringify(dati)); } catch(e){}
+        return;
+    }
+
+    // 2) Prova a recuperare da localStorage
+        if (chiaveStorage) {
+        try {
+            const saved = localStorage.getItem(chiaveStorage);
+            if (saved) {
+                const dati = JSON.parse(saved);
+                if (Date.now() - dati.timestamp < 3600000) { // Entro 1 ora
+                    parametriUrl.cliente = dati.lettera;
+                    parametriUrl.session_id = dati.session_id || null;
+                    // Impostiamo anche il campo esplicito sessione_cliente_id (fallback su session_id se mancante)
+                    parametriUrl.sessione_cliente_id = dati.sessione_cliente_id || dati.session_id || null;
+
+                    // Aggiorna DOM compatibile
+                    try {
+                        if (document.getElementById('cliente-corrente-letter')) document.getElementById('cliente-corrente-letter').textContent = dati.lettera;
+                        else if (document.getElementById('cliente-corrente')) document.getElementById('cliente-corrente').textContent = dati.lettera;
+
+                        if (document.getElementById('cliente-corrente-nome')) {
+                            document.getElementById('cliente-corrente-nome').textContent = dati.nome || dati.lettera || '--';
+                        } else {
+                            // per vecchie versioni, aggiorna #cliente-corrente se presente
+                            if (document.getElementById('cliente-corrente') && !document.getElementById('cliente-corrente-letter')) {
+                                document.getElementById('cliente-corrente').textContent = dati.lettera;
+                            }
+                        }
+
+                        try { document.getElementById('cliente-corrente-container').style.display = 'inline'; } catch(e){}
+                    } catch(e){}
+
+                    // Se manca il nome nel localStorage, proviamo a risolverlo dal server (best-effort)
+                    if (!dati.nome) {
+                        (async function() {
+                            try {
+                                // preferisci ApiService se disponibile
+                                let clientiResp = null;
+                                if (window.apiService && typeof window.apiService.getClientiRegistrati === 'function') {
+                                    clientiResp = await window.apiService.getClientiRegistrati({ tavolo_id: parametriUrl.tavolo, sessione: parametriUrl.sessione, formEncoded: true });
+                                } else if (typeof fetchClientiTavolo === 'function') {
+                                    clientiResp = await fetchClientiTavolo();
+                                } else {
+                                    clientiResp = null;
+                                }
+
+                                // normalizza array di clienti
+                                let clienti = [];
+                                if (Array.isArray(clientiResp)) clienti = clientiResp;
+                                else if (clientiResp && clientiResp.clienti && Array.isArray(clientiResp.clienti)) clienti = clientiResp.clienti;
+                                else if (Array.isArray(clientiResp.data)) clienti = clientiResp.data;
+                                else if (Array.isArray(clientiResp.results)) clienti = clientiResp.results;
+                                else if (Array.isArray(clientiResp.clienti_registrati)) clienti = clientiResp.clienti_registrati;
+
+                                if (clienti && clienti.length) {
+                                    const found = clienti.find(c =>
+                                        (c.sessione_cliente_id && parametriUrl.sessione_cliente_id && String(c.sessione_cliente_id) === String(parametriUrl.sessione_cliente_id)) ||
+                                        (c.lettera && String(c.lettera) === String(parametriUrl.cliente))
+                                    );
+                                    if (found && found.nome) {
+                                        dati.nome = found.nome;
+                                        try { localStorage.setItem(chiaveStorage, JSON.stringify(Object.assign({}, dati, { nome: found.nome }))); } catch(e){}
+                                        try { if (document.getElementById('cliente-corrente-nome')) document.getElementById('cliente-corrente-nome').textContent = found.nome; } catch(e){}
+                                    }
+                                }
+                            } catch(e) { /* ignore fetch error */ }
+                        })();
+                    }
+
+                    return;
+                }
+            }
+        } catch(e) { /* ignore localStorage parse errors */ }
+    }
+    
+    // 3) Se arrivo qui, devo registrare automaticamente il cliente
+    await registraClienteAutomaticamente(chiaveStorage);
+}
+            
+/* NEW: risolve nome cliente se mancante (best-effort) */
+window.risolviNomeClienteAutomatico = async function() {
+  try {
+    const qs = new URLSearchParams(window.location.search || '');
+    const tav = parametriUrl && parametriUrl.tavolo ? parametriUrl.tavolo : qs.get('tavolo') || null;
+    const sess = parametriUrl && parametriUrl.sessione ? parametriUrl.sessione : qs.get('sessione') || null;
+    if (!tav && !sess) return;
+    const key = sess ? 'cliente_sessione_' + sess : (tav ? 'cliente_tavolo_' + tav : null);
+    if (!key) return;
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(key)); } catch (e){ saved = null; }
+
+    const letter = (parametriUrl && parametriUrl.cliente) || qs.get('cliente') || (saved && saved.lettera) || null;
+    if (!letter) return;
+
+    // Se abbiamo gi├á il nome, aggiorna UI e esci
+    if (saved && saved.nome) {
+      try { if (document.getElementById('cliente-corrente-nome')) document.getElementById('cliente-corrente-nome').textContent = saved.nome; } catch(e){}
+      return;
+    }
+
+    // Ottieni lista clienti dal server: preferisci apiService se disponibile, altrimenti fetchClientiTavolo (poll se necessario)
+    let clientiResp = null;
+    if (window.apiService && typeof window.apiService.getClientiRegistrati === 'function') {
+      try {
+        clientiResp = await window.apiService.getClientiRegistrati({ tavolo_id: tav, sessione: sess, formEncoded: true });
+      } catch(e) { clientiResp = null; }
+    } else {
+      // aspetta che fetchClientiTavolo sia definita (best-effort)
+      let retries = 6;
+      while (retries-- > 0 && typeof fetchClientiTavolo !== 'function') {
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (typeof fetchClientiTavolo === 'function') {
+        try { clientiResp = await fetchClientiTavolo(); } catch(e){ clientiResp = null; }
+      }
+    }
+
+    if (!clientiResp) return;
+
+    // Normalizza possibile struttura
+    let clienti = [];
+    if (Array.isArray(clientiResp)) clienti = clientiResp;
+    else if (clientiResp && typeof clientiResp === 'object') clienti = clientiResp.clienti || clientiResp.data || clientiResp.results || clientiResp.clienti_registrati || clientiResp;
+
+    // Trova il cliente per lettera o sessione
+    let found = null;
+    const sessId = (parametriUrl && parametriUrl.sessione_cliente_id) || qs.get('sessione_cliente_id') || null;
+
+    if (Array.isArray(clienti)) {
+      found = clienti.find(c => (c.lettera && String(c.lettera) === String(letter)) || (c.sessione_cliente_id && sessId && String(c.sessione_cliente_id) === String(sessId)));
+    } else if (clienti && typeof clienti === 'object') {
+      if (letter && clienti[letter]) found = clienti[letter];
+      else {
+        const vals = Object.values(clienti);
+        found = vals.find(c => (c.lettera && String(c.lettera) === String(letter)) || (c.sessione_cliente_id && sessId && String(c.sessione_cliente_id) === String(sessId)));
+      }
+    }
+
+    if (found && found.nome) {
+      const toSave = saved || {};
+      toSave.nome = found.nome;
+      toSave.lettera = toSave.lettera || found.lettera || letter;
+      try { localStorage.setItem(key, JSON.stringify(toSave)); } catch(e){}
+      try { if (document.getElementById('cliente-corrente-nome')) document.getElementById('cliente-corrente-nome').textContent = found.nome; } catch(e){}
+      try { if (document.getElementById('cliente-corrente-letter')) document.getElementById('cliente-corrente-letter').textContent = toSave.lettera; } catch(e){}
+    }
+  } catch(e) {
+    console.warn('risolviNomeClienteAutomatico error', e);
+  }
+};
+
+async function registraClienteAutomaticamente(chiaveStorage) {
+    try {
+        let tavoloIdPerRegistrazione = null;
+
+        if (parametriUrl.tavolo) {
+            tavoloIdPerRegistrazione = parseInt(parametriUrl.tavolo);
+        } else {
+            console.warn('Nessun tavolo_id disponibile per la registrazione cliente.');
+            try { document.getElementById('cliente-corrente').textContent = '--'; } catch(e){}
+            return;
+        }
+
+        const response = await fetch('../api/clienti/registra-cliente.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tavolo_id: tavoloIdPerRegistrazione,
+                nome: '',
+                device_id: navigator.userAgent + '_' + (navigator.hardwareConcurrency || '') + '_' + screen.width + 'x' + screen.height
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            parametriUrl.cliente = data.lettera;
+            parametriUrl.session_id = data.session_id || null;              // compatibilit├á interna
+            parametriUrl.sessione_cliente_id = data.session_id || null;     // nuovo campo esplicito
+
+            try { document.getElementById('cliente-corrente').textContent = data.lettera; } catch(e){}
+            try { document.getElementById('cliente-corrente-container').style.display = 'inline'; } catch(e){}
+
+            // Salva in localStorage (per sessione o per tavolo, a seconda di chiaveStorage)
+            if (!chiaveStorage) {
+                if (parametriUrl.sessione) {
+                    chiaveStorage = 'cliente_sessione_' + parametriUrl.sessione;
+                } else if (parametriUrl.tavolo) {
+                    chiaveStorage = 'cliente_tavolo_' + parametriUrl.tavolo;
+                }
+            }
+
+                        try {
+                if (chiaveStorage) {
+                    const toSave = {
+                        lettera: data.lettera,
+                        session_id: data.session_id || null,
+                        sessione_cliente_id: data.session_id || null,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(chiaveStorage, JSON.stringify(toSave));
+
+                    // Best-effort: prova a recuperare il nome dal server e aggiornare localStorage / UI
+                    (async function() {
+                        try {
+                            // preferisci ApiService se disponibile
+                            let clientiResp = null;
+                            if (window.apiService && typeof window.apiService.getClientiRegistrati === 'function') {
+                                clientiResp = await window.apiService.getClientiRegistrati({ tavolo_id: parametriUrl.tavolo, sessione: parametriUrl.sessione, formEncoded: true });
+                            } else if (typeof fetchClientiTavolo === 'function') {
+                                clientiResp = await fetchClientiTavolo();
+                            } else {
+                                clientiResp = null;
+                            }
+
+                            let clienti = [];
+                            if (Array.isArray(clientiResp)) clienti = clientiResp;
+                            else if (clientiResp && clientiResp.clienti && Array.isArray(clientiResp.clienti)) clienti = clientiResp.clienti;
+                            else if (Array.isArray(clientiResp.data)) clienti = clientiResp.data;
+                            else if (Array.isArray(clientiResp.results)) clienti = clientiResp.results;
+                            else if (Array.isArray(clientiResp.clienti_registrati)) clienti = clientiResp.clienti_registrati;
+
+                            const found = Array.isArray(clienti) && clienti.find(c =>
+                                (c.sessione_cliente_id && String(c.sessione_cliente_id) === String(toSave.sessione_cliente_id)) ||
+                                (c.lettera && String(c.lettera) === String(toSave.lettera))
+                            );
+                            if (found && found.nome) {
+                                toSave.nome = found.nome;
+                                try { localStorage.setItem(chiaveStorage, JSON.stringify(toSave)); } catch(e){}
+                                try { if (document.getElementById('cliente-corrente-nome')) document.getElementById('cliente-corrente-nome').textContent = found.nome; } catch(e){}
+                            }
+                        } catch(e) { /* ignore */ }
+                    })();
+                }
+            } catch(e){}
+
+            mostraNotifica(`Benvenuto Cliente ${data.lettera}!`);
+        } else {
+            try { document.getElementById('cliente-corrente').textContent = 'ERR'; } catch(e){}
+            alert('Errore: ' + data.error);
+        }
+    } catch (error) {
+        alert('ERRORE di connessione: ' + error.message);
+    } finally {
+        // Sicuro: non fare riferimenti a variabili non definite in questo scope
+        try {
+            if (typeof btnInvia !== 'undefined' && btnInvia) {
+                if (typeof btnInvia.disabled !== 'undefined') btnInvia.disabled = false;
+                if (typeof prevHtml !== 'undefined' && prevHtml !== null) {
+                    try { btnInvia.innerHTML = prevHtml; } catch(e){}
+                }
+            }
+        } catch(e){}
+    }
+}
+
+// Carica menu dall'API
+async function caricareMenu() {
+    try {
+        const response = await fetch('../api/menu/menu.php');
+        const data = await response.json();
+        
+        if (data && data.success) {
+            mostrareMenu(data.data);
+        } else {
+            try { document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore nel caricamento del menu</div>'; } catch(e){}
+        }
+    } catch (error) {
+        try { document.getElementById('menu').innerHTML = '<div class="alert alert-danger">Errore di connessione</div>'; } catch(e){}
+    }
+}
+
+// Inizializza UI dopo caricamento dati
+function inizializzareUI() {
+    try {
+        // Nascondi loading
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) loadingEl.style.display = 'none';
+        const menuEl = document.getElementById('menu');
+        if (menuEl) menuEl.style.display = 'block';
+        
+                // Setup pulsante bevande
+        try { setupPulsanteBevande(); } catch(e){}
+        // Carica ordini precedenti
+        try { caricareOrdiniPrecedenti(); } catch(e){}
+
+        // Assicura presenza di un pulsante unico "Ordina bevande" nella header se la categoria Bevande non ├¿ mostrata
+        try {
+                    if (!document.getElementById('btn-apri-bevande-unico')) {
+                const headerRow = document.querySelector('.header .container .row .col-8') || document.querySelector('.header .container .row');
+                const containerForBtn = headerRow || document.querySelector('.header .container');
+                if (containerForBtn) {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'inline-block';
+                    wrapper.style.marginLeft = '12px';
+                    wrapper.style.marginTop = '6px';
+                    const btn = document.createElement('button');
+                    btn.id = 'btn-apri-bevande-unico';
+                    btn.type = 'button';
+                    btn.className = 'btn btn-outline-primary btn-sm';
+                    btn.textContent = 'Ordina bevande';
+                    // binding idempotente: evita duplicati se il codice viene eseguito pi├╣ volte
+                    if (!btn.dataset.boundClick) {
+                        btn.addEventListener('click', () => { try { apriModalBevande(); } catch(e) { console.error('Errore apriModalBevande', e); } });
+                        btn.dataset.boundClick = '1';
+                    }
+                    wrapper.appendChild(btn);
+                    // preferisci inserire il bottone nella col-4 (destra) se esiste, altrimenti nella col-8 o nel container principale
+                    const headerRight = document.querySelector('.header .container .row .col-4.text-end');
+                    if (headerRight) {
+                        headerRight.insertBefore(wrapper, headerRight.firstChild);
+                    } else {
+                        containerForBtn.appendChild(wrapper);
+                    }
+                }
+            }
+        } catch(e) { console.warn('inizializzareUI: non posso inserire btn-apri-bevande-unico', e); }
+
+        // AGGIUNTA: mostra pulsante "Torna alla Home cameriere" se arrivo dal cameriere
+        if (window.arrivaDaCameriere) {
+            const backContainer = document.getElementById('back-to-cameriere-container');
+            const backBtn = document.getElementById('btn-back-to-cameriere');
+            if (backContainer && backBtn) {
+                backContainer.style.display = 'block';
+                backBtn.addEventListener('click', () => {
+                    window.close();
+                    setTimeout(() => {
+                        if (!window.closed) {
+                            alert('Puoi chiudere questa finestra per tornare alla Home cameriere.');
+                        }
+                    }, 200);
+                });
+            }
+        }
+                // FINE AGGIUNTA
+
+        // Ensure persistent idempotent bindings for header buttons (in case they were created elsewhere)
+        try {
+            // bind Ordina bevande button if present
+            const bBev = document.getElementById('btn-apri-bevande-unico');
+            if (bBev && !bBev.dataset.boundClick) {
+                bBev.addEventListener('click', () => { try { apriModalBevande(); } catch(e) { console.error('apriModalBevande error', e); } });
+                bBev.dataset.boundClick = '1';
+            }
+            // bind Visualizza ordini button if present
+            const bOrd = document.getElementById('btn-visualizza-ordini');
+            if (bOrd && !bOrd.dataset.boundClick) {
+                bOrd.addEventListener('click', () => { try { mostraStoricoOrdini(); } catch(e) { console.error('mostraStoricoOrdini error', e); } });
+                bOrd.dataset.boundClick = '1';
+            }
+        } catch(e) { /* ignore */ }
+
+    } catch(e) {
+        console.error('inizializzareUI error', e);
+    }
+}
+// Inizializzazione della pagina (restore dopo refactor)
+window.onload = async function() {
+    // 1. Legge parametri dalla URL
+    try { await leggereParametriUrl(); } catch(e) { console.error('errore leggereParametriUrl onload', e); }
+
+    // Best-effort: risolvi il nome cliente dal server/localStorage se manca
+    try { if (typeof window.risolviNomeClienteAutomatico === 'function') await window.risolviNomeClienteAutomatico(); } catch(e){ console.warn('risolviNomeClienteAutomatico onload failed', e); }
+
+    // 2. Carica menu
+    try { await caricareMenu(); } catch(e) { console.error('errore caricareMenu onload', e); }
+
+    // 3. Inizializza UI
+    try { inizializzareUI(); } catch(e) { console.error('errore inizializzareUI onload', e); }
+};
+
+    // AGGIUNTA: mostra pulsante "Torna alla Home cameriere" se arrivo dal cameriere
+    if (window.arrivaDaCameriere) {
+        const backContainer = document.getElementById('back-to-cameriere-container');
+        const backBtn = document.getElementById('btn-back-to-cameriere');
+        if (backContainer && backBtn) {
+            backContainer.style.display = 'block';
+            backBtn.addEventListener('click', () => {
+                window.close();
+                setTimeout(() => {
+                    if (!window.closed) {
+                        alert('Puoi chiudere questa finestra per tornare alla Home cameriere.');
+                    }
+                }, 200);
+            });
+        }
+    }
+	
+    // FINE AGGIUNTA
+function setupPulsanteBevande() {
+    // Aggiungi pulsante bevande solo nella categoria Bevande
+    const menuContainer = document.getElementById('menu');
+    const categorie = menuContainer ? menuContainer.querySelectorAll('.card') : [];
+    
+    categorie.forEach(categoria => {
+        const header = categoria.querySelector('.card-header');
+        if (header && (header.textContent.includes('Bevande') || header.textContent.includes('bevande'))) {
+            // Controlla se il pulsante esiste gi├á
+            const existingButton = categoria.querySelector('.btn-aggiungi-bevande');
+            if (existingButton) {
+                // Se esiste gi├á, rimuovilo per evitare duplicati
+                existingButton.parentNode.remove();
+            }
+            
+                        // Aggiungi pulsante per aggiungere bevande
+            // Il pulsante "Aggiungi altre bevande" ├¿ stato rimosso intenzionalmente per evitare
+            // conflitti/avvisi ARIA. Se in futuro vuoi riattivarlo, reinserisci qui un button che
+            // chiami apriModalBevande(), oppure usa la funzione restore preventiva dell'app.
+            // (Nessun elemento viene inserito in questa posizione.)
+        }
+    });
+}
+
+// ================= GESTIONE MENU E CARRELLO =================
+// ---------- Nuovo sistema: macrocategorie e dettagli per sottocategorie ----------
+
+/*
+  Helper: crea e ritorna un elemento DOM per un singolo piatto (con pulsante Aggiungi / Ordina bevande).
+  Riusiamo lo stesso rendering che avevi in precedenza.
+*/
+function creaElementoPiatto(piatto) {
+    const item = document.createElement('div');
+    item.className = 'piatto-item';
+
+    const info = document.createElement('div');
+    info.style.flex = '1';
+
+    const titolo = document.createElement('h5');
+    titolo.className = 'mb-1';
+    titolo.textContent = piatto.nome || 'Voce';
+
+    const descr = document.createElement('p');
+    descr.className = 'text-muted mb-1 small';
+    descr.textContent = piatto.descrizione || '';
+
+    const meta = document.createElement('div');
+    meta.className = 'd-flex align-items-center';
+
+    const prezzoSpan = document.createElement('span');
+    prezzoSpan.className = 'text-success fw-bold';
+    const prezzoVal = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
+    prezzoSpan.textContent = `Ôé¼${prezzoVal.toFixed(2)}`;
+    meta.appendChild(prezzoSpan);
+
+    if (piatto.tempo_preparazione) {
+        const badgeTime = document.createElement('span');
+        badgeTime.className = 'badge bg-secondary ms-2';
+        const iconTime = document.createElement('i');
+        iconTime.className = 'fas fa-clock me-1';
+        badgeTime.appendChild(iconTime);
+        badgeTime.appendChild(document.createTextNode(String(piatto.tempo_preparazione) + ' min'));
+        meta.appendChild(badgeTime);
+    }
+    if (piatto.punti_fedelta) {
+        const badgePunti = document.createElement('span');
+        badgePunti.className = 'badge bg-warning ms-2';
+        const iconStar = document.createElement('i');
+        iconStar.className = 'fas fa-star me-1';
+        badgePunti.appendChild(iconStar);
+        badgePunti.appendChild(document.createTextNode(String(piatto.punti_fedelta) + ' punti'));
+        meta.appendChild(badgePunti);
+    }
+
+    info.appendChild(titolo);
+    info.appendChild(descr);
+    info.appendChild(meta);
+
+    const right = document.createElement('div');
+
+    const isBevande = (piatto.categoria && String(piatto.categoria).toLowerCase().includes('bevande')) || (piatto.tipo && String(piatto.tipo).toLowerCase().includes('bevanda'));
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-ordina';
+    try {
+      if (piatto && typeof piatto.id !== 'undefined') btn.dataset.id = String(piatto.id);
+      if (piatto && typeof piatto.nome !== 'undefined') btn.dataset.nome = String(piatto.nome);
+      const _prezzoVal_for_dataset = (typeof prezzoVal !== 'undefined' && !isNaN(prezzoVal)) ? prezzoVal : ((typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0);
+      btn.dataset.prezzo = String(_prezzoVal_for_dataset);
+    } catch(e){/* ignore dataset errors */}
+
+    if (isBevande) {
+        btn.innerHTML = `<i class="fas fa-wine-glass me-1"></i>Ordina`;
+        btn.addEventListener('click', () => {
+            const modalEl = document.getElementById('modal-bevande');
+            const val = String(piatto.id);
+            if (modalEl) {
+              modalEl.dataset.pendingBevanda = val;
+              try {
+                if (typeof prezzoVal !== 'undefined' && !isNaN(prezzoVal)) modalEl.dataset.pendingPrezzo = String(prezzoVal);
+                if (piatto && piatto.nome) modalEl.dataset.pendingNome = String(piatto.nome);
+              } catch (e) { /* ignore dataset errors */ }
+            }
+            const sel = document.getElementById('select-bevanda');
+            if (sel) {
+                let opt = Array.from(sel.options).find(o => o.value === val);
+                if (!opt && piatto.nome) {
+                    const nomeLower = String(piatto.nome).toLowerCase();
+                    opt = Array.from(sel.options).find(o => (o.text || '').toLowerCase().includes(nomeLower));
+                }
+                if (opt) sel.value = opt.value;
+            }
+            apriModalBevande();
+        });
+    } else {
+        btn.innerHTML = `<i class="fas fa-plus me-1"></i>Aggiungi`;
+        btn.addEventListener('click', () => {
+            if (typeof aggiungereAlCarrello === 'function') {
+                const id = piatto.id;
+                const nome = piatto.nome || '';
+                const prezzo = (typeof piatto.prezzo === 'number') ? piatto.prezzo : parseFloat(piatto.prezzo) || 0;
+                aggiungereAlCarrello(id, nome, prezzo);
+            } else {
+                alert('Funzione aggiungereAlCarrello non disponibile');
+            }
+        });
+    }
+
+    right.appendChild(btn);
+    item.appendChild(info);
+    item.appendChild(right);
+
+    return item;
+}
+
+/*
+  Renderizza una lista di piatti dentro un container (array di oggetti piatto).
+*/
+function renderListaPiatti(container, piatti) {
+    if (!container) return;
+    if (!Array.isArray(piatti) || piatti.length === 0) {
+        const none = document.createElement('div');
+        none.className = 'text-muted small p-2';
+        none.textContent = 'Nessun piatto in questa sottocategoria';
+        container.appendChild(none);
+        return;
+    }
+    piatti.forEach(p => {
+        try {
+            const el = creaElementoPiatto(p);
+            container.appendChild(el);
+        } catch(e) { console.warn('Errore render piatto', e); }
+    });
+}
+
+/*
+  Mostra la lista delle macrocategorie (pagina principale).
+  macros: array di oggetti { nome, descrizione?, sottocategorie?: [...], count?: number, id? }
+*/
+function mostrareMacrocategorie(macros) {
+    const menu = document.getElementById('menu');
+    if (!menu) return;
+    menu.innerHTML = '';
+
+    // Header/Back area: aggiunge un wrapper per il pulsante di ritorno (invisibile nella vista macro)
+    const topBar = document.createElement('div');
+    topBar.className = 'd-flex align-items-center mb-3';
+    const backBtn = document.getElementById('btn-back-to-main-categorie') || document.createElement('button');
+    backBtn.id = 'btn-back-to-main-categorie';
+    backBtn.type = 'button';
+    backBtn.className = 'btn btn-outline-secondary btn-sm me-3 d-none';
+    backBtn.textContent = 'ÔåÉ Menu principale';
+    backBtn.addEventListener('click', () => {
+        // quando visibile, riporta alle macrocategorie (qui non dovrebbe essere visibile)
+        mostrareMacrocategorie(window._menu_macros || macros);
+    });
+    topBar.appendChild(backBtn);
+
+    const title = document.createElement('h4');
+    title.textContent = 'Categorie';
+    title.style.margin = 0;
+    topBar.appendChild(title);
+    menu.appendChild(topBar);
+
+    // Cards per ogni macro
+    const grid = document.createElement('div');
+    grid.className = 'macrocategorie-grid';
+    macros.forEach((m, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card mb-3';
+
+        const header = document.createElement('div');
+        header.className = 'card-header d-flex justify-content-between align-items-center';
+        const nome = document.createElement('div');
+        nome.textContent = m.nome || m.titolo || `Categoria ${idx+1}`;
+        header.appendChild(nome);
+
+        const openArea = document.createElement('div');
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.className = 'btn btn-outline-primary btn-sm';
+        openBtn.textContent = 'Apri';
+        openBtn.addEventListener('click', () => {
+  try {
+    const macroParam = encodeURIComponent(m.nome || m.titolo || String(idx));
+    window.location.href = './app/menu-categoria.html?macro=' + macroParam;
+  } catch (e) {
+    // fallback: mostra la vista nella stessa pagina se qualcosa va storto
+    try { mostrareCategoriaView(m); } catch (_) { console.warn('Impossibile navigare o mostrare categoria', e); }
+  }
+});
+        openArea.appendChild(openBtn);
+        header.appendChild(openArea);
+
+        card.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'card-body small text-muted';
+        const descr = document.createElement('div');
+        descr.textContent = m.descrizione || m.note || (Array.isArray(m.sottocategorie) ? `${m.sottocategorie.length} sottocategorie` : '');
+        body.appendChild(descr);
+        card.appendChild(body);
+
+        grid.appendChild(card);
+    });
+
+    menu.appendChild(grid);
+}
+
+/*
+  Mostra la vista per una singola macro: elenca le sottocategorie e le relative pietanze
+  macro: oggetto con propriet├á sottocategorie (array) o categories (array) o children
+*/
+function mostrareCategoriaView(macro) {
+    const menu = document.getElementById('menu');
+    if (!menu) return;
+    menu.innerHTML = '';
+
+    // Topbar con pulsante torni al menu macros
+    const topBar = document.createElement('div');
+    topBar.className = 'd-flex align-items-center mb-3';
+
+    const backBtn = document.getElementById('btn-back-to-main-categorie') || document.createElement('button');
+    backBtn.id = 'btn-back-to-main-categorie';
+    backBtn.type = 'button';
+    backBtn.className = 'btn btn-outline-secondary btn-sm me-3';
+    backBtn.textContent = 'ÔåÉ Torna alle categorie';
+    backBtn.addEventListener('click', () => {
+        mostrareMacrocategorie(window._menu_macros || []);
+    });
+    topBar.appendChild(backBtn);
+
+    const title = document.createElement('h4');
+    title.textContent = macro.nome || macro.titolo || 'Categoria';
+    title.style.margin = 0;
+    topBar.appendChild(title);
+
+    menu.appendChild(topBar);
+
+    // Trova le sottocategorie
+    const subs = macro.sottocategorie || macro.subcategories || macro.children || macro.categorie || macro.categories || [];
+
+    // Se la macro contiene direttamente piatti (senza sottocategorie), mostriamo i piatti direttamente
+    if (Array.isArray(macro.piatti) && macro.piatti.length) {
+        const container = document.createElement('div');
+        container.className = 'list-piatti';
+        renderListaPiatti(container, macro.piatti);
+        menu.appendChild(container);
+        return;
+    }
+
+    if (!Array.isArray(subs) || subs.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-muted';
+        empty.textContent = 'Nessuna sottocategoria disponibile';
+        menu.appendChild(empty);
+        return;
+    }
+
+    // Per ogni sottocategoria: card con header e lista piatti (se presenti)
+    subs.forEach(sub => {
+        const card = document.createElement('div');
+        card.className = 'card mb-3';
+
+        const header = document.createElement('div');
+        header.className = 'card-header';
+        header.textContent = sub.nome || sub.titolo || 'Sottocategoria';
+        card.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'card-body p-2';
+        // Mostriamo i piatti appartenenti alla sottocategoria
+        const piatti = sub.piatti || sub.items || sub.piatti_lista || sub.dishes || [];
+        renderListaPiatti(body, piatti);
+
+        card.appendChild(body);
+        menu.appendChild(card);
+    });
+}
+
+/*
+  Wrapper intelligente: decide se la risposta API ├¿ gi├á macrocategorie oppure se raggruppare per campo `macro`.
+  Accetta la stessa struttura che aveva `mostrareMenu` prima (compatibilit├á).
+*/
+function mostrareMenu(categorie) {
+    const menu = document.getElementById('menu');
+    if (!menu) return;
+    menu.innerHTML = '';
+
+    if (!Array.isArray(categorie)) {
+        menu.textContent = 'Menu non disponibile';
+        return;
+    }
+
+    // 1) Se gli elementi hanno gi├á sottocategorie (struttura a due livelli), trattali come macrocategorie
+    const looksLikeMacros = categorie.every(c => c && (Array.isArray(c.sottocategorie) || Array.isArray(c.subcategories) || Array.isArray(c.children) || Array.isArray(c.categorie)));
+    if (looksLikeMacros) {
+        window._menu_macros = categorie.slice();
+        mostrareMacrocategorie(window._menu_macros);
+        return;
+    }
+
+    // 2) Se le categorie hanno un campo `macro` (string), raggruppa le categorie sotto le macrocategorie
+    const hasMacroField = categorie.some(c => c && typeof c.macro === 'string' && c.macro.trim().length > 0);
+    if (hasMacroField) {
+        const map = {};
+        categorie.forEach(c => {
+            const macroName = (c && c.macro) ? String(c.macro).trim() : 'Altro';
+            map[macroName] = map[macroName] || { nome: macroName, sottocategorie: [] };
+            map[macroName].sottocategorie.push(c);
+        });
+        const macros = Object.keys(map).map(k => map[k]);
+        window._menu_macros = macros;
+        mostrareMacrocategorie(macros);
+        return;
+    }
+
+    // 3) Fallback: se i dati sono una lista piatta di categorie con piatti (vecchio comportamento),
+    //    mostriamo direttamente le categorie come se fossero sottocategorie di una macro "Menu".
+    const wrapperMacro = { nome: 'Menu', sottocategorie: [] };
+    categorie.forEach(c => {
+        // converti categoria in sottocategoria shape
+        const sub = {
+            nome: c.nome || c.titolo || 'Categoria',
+            piatti: Array.isArray(c.piatti) ? c.piatti : (c.items || [])
+        };
+        wrapperMacro.sottocategorie.push(sub);
+    });
+    window._menu_macros = [ wrapperMacro ];
+    mostrareMacrocategorie(window._menu_macros);
+}
+// ---------- Fine nuovo sistema ----------
+
+function aggiungereAlCarrello(id, nome, prezzo) {
+    if (!parametriUrl.cliente) {
+        alert('Errore: cliente non specificato');
+        return;
+    }
+    
+    // Aggiungi al carrello
+    carrello.push({
+        id: id,
+        nome: nome,
+        prezzo: prezzo,
+        cliente: parametriUrl.cliente,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Aggiorna UI
+    aggiornareCarrelloUI();
+    
+    // Notifica
+    mostraNotifica(`${nome} aggiunto al carrello`);
+}
+
+function rimuovereDalCarrello(index) {
+    carrello.splice(index, 1);
+    aggiornareCarrelloUI();
+}
+
+function svuotaCarrello() {
+    if (carrello.length === 0) return;
+    
+    if (confirm(`Vuoi svuotare tutto il carrello? (${carrello.length} articoli)`)) {
+        carrello = [];
+        aggiornareCarrelloUI();
+    }
+}
+
+function aggiornareCarrelloUI() {
+    const totaleArticoli = carrello.length;
+    const totalePrezzo = carrello.reduce((sum, item) => sum + item.prezzo, 0);
+    
+    // Aggiorna totali
+    const artEl = document.getElementById('totale-articoli');
+    const preEl = document.getElementById('totale-prezzo');
+    if (artEl) artEl.textContent = totaleArticoli;
+    if (preEl) preEl.textContent = totalePrezzo.toFixed(2);
+    
+    // Aggiorna contenuto carrello
+    const container = document.getElementById('carrello-contenuto');
+
+    if (!container) return;
+
+    // Svuota in modo sicuro il contenitore
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    if (carrello.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'text-muted mb-0';
+        p.innerHTML = '<em>Carrello vuoto</em>';
+        container.appendChild(p);
+    } else {
+        carrello.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.className = 'carrello-item';
+
+            const left = document.createElement('div');
+            // nome (testo sicuro)
+            const nomeEl = document.createElement('span');
+            nomeEl.textContent = item.nome;
+            left.appendChild(nomeEl);
+
+            // badge cliente
+            const badge = document.createElement('span');
+            badge.className = 'cliente-label';
+            badge.style.background = getColoreCliente(item.cliente);
+            badge.textContent = item.cliente;
+            badge.style.marginLeft = '8px';
+            left.appendChild(badge);
+
+            const right = document.createElement('div');
+            right.className = 'd-flex align-items-center';
+
+            const prezzoEl = document.createElement('span');
+            prezzoEl.className = 'fw-bold me-3';
+            prezzoEl.textContent = 'Ôé¼' + Number(item.prezzo).toFixed(2);
+            right.appendChild(prezzoEl);
+
+            const btnRimuovi = document.createElement('button');
+            btnRimuovi.className = 'btn-rimuovi';
+            btnRimuovi.type = 'button';
+            btnRimuovi.addEventListener('click', () => {
+                rimuovereDalCarrello(index);
+            });
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-times';
+            btnRimuovi.appendChild(icon);
+            right.appendChild(btnRimuovi);
+
+            row.appendChild(left);
+            row.appendChild(right);
+
+            container.appendChild(row);
+        });
+    }
+    
+    // Mostra/nascondi carrello
+    const carEl = document.getElementById('carrello');
+    if (carEl) {
+        if (totaleArticoli > 0) {
+            carEl.style.display = 'block';
+        } else {
+            carEl.style.display = 'none';
+        }
+    }
+}
+
+function getColoreCliente(lettera) {
+    const colori = {
+        'A': '#3498db', 'B': '#2ecc71', 'C': '#e74c3c',
+        'D': '#f39c12', 'E': '#9b59b6', 'F': '#1abc9c',
+        'G': '#7f8c8d', 'H': '#34495e', 'I': '#d35400',
+        'J': '#16a085', 'K': '#8e44ad', 'L': '#2c3e50'
+    };
+    return colori[lettera] || '#95a5a6';
+}
+
+function mostraNotifica(messaggio) {
+    // Creazione notifica temporanea
+    const notifica = document.createElement('div');
+    notifica.className = 'alert alert-success position-fixed';
+    notifica.style.cssText = `
+        top: 20px; right: 20px; z-index: 9999;
+        animation: fadeInOut 3s ease-in-out;
+    `;
+    notifica.innerHTML = `<i class="fas fa-check-circle me-2"></i>${messaggio}`;
+    
+    document.body.appendChild(notifica);
+    
+
+    setTimeout(() => {
+        notifica.remove();
+    }, 3000);
+}
+function escapeHtml(str) {
+if (str === null || str === undefined) return '';
+return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+// ================= GESTIONE BEVANDE =================
+function apriModalBevande() {
+    try {
+        // Se il modal non ├¿ presente nel DOM, ripristiniamolo dal template (se esiste).
+        let modalEl = document.getElementById('modal-bevande');
+        if (!modalEl) {
+            const tmpl = document.getElementById('tmpl-modal-bevande');
+            if (tmpl && tmpl.innerHTML && tmpl.innerHTML.trim()) {
+                const container = document.createElement('div');
+                container.innerHTML = tmpl.innerHTML.trim();
+                modalEl = container.firstElementChild;
+                if (modalEl) document.body.appendChild(modalEl);
+            }
+        }
+
+        if (!modalEl) {
+            console.error('apriModalBevande: impossibile trovare o ripristinare #modal-bevande');
+            return;
+        }
+
+        // Bind minimi e idempotenti se non ancora applicati
+        try {
+            if (!modalEl.dataset.boundBevande) {
+                // shown handler: imposteremo preselect / popolamento e focus in modo sicuro pi├╣ sotto
+                modalEl.addEventListener('shown.bs.modal', async () => {
+                    try {
+                        // Assicuriamoci che parametriUrl sia presente
+                        if (!parametriUrl || typeof parametriUrl !== 'object') parametriUrl = {};
+                        const qs = new URLSearchParams(window.location.search);
+                        if (!parametriUrl.sessione) parametriUrl.sessione = qs.get('sessione') || null;
+                        if (!parametriUrl.tavolo) parametriUrl.tavolo = qs.get('tavolo') || null;
+                        if (!parametriUrl.cliente) parametriUrl.cliente = qs.get('cliente') || null;
+                        if (!parametriUrl.sessione_cliente_id) parametriUrl.sessione_cliente_id = qs.get('sessione_cliente_id') || parametriUrl.sessione_cliente_id || null;
+                        if (!parametriUrl.session_id) parametriUrl.session_id = parametriUrl.sessione_cliente_id || parametriUrl.session_id || null;
+                    } catch (e) { /* ignore */ }
+
+                                        // Preselect pendingBevanda se presente (con fallback su prezzo/nome)
+                    try {
+                        const pending = modalEl.dataset.pendingBevanda;
+                        const sel = document.getElementById('select-bevanda');
+                        if (pending && sel) {
+                            let matched = false;
+                            const optByValue = Array.from(sel.options).find(o => o.value === String(pending));
+                            if (optByValue) {
+                                sel.value = optByValue.value;
+                                matched = true;
+                            } else {
+                                const pendingStr = String(pending).toLowerCase();
+                                const optByText = Array.from(sel.options).find(o => (o.text || '').toLowerCase().includes(pendingStr));
+                                if (optByText) {
+                                    sel.value = optByText.value;
+                                    matched = true;
+                                }
+                            }
+
+                            if (!matched) {
+                                // fallback: usa pendingPrezzo/pendingNome per aggiornare il totale del modal
+                                const pendingPrezzo = modalEl.dataset.pendingPrezzo || null;
+                                const pendingNome = modalEl.dataset.pendingNome || null;
+                                const qtyEl = document.getElementById('quantita-bevanda');
+                                const out = document.getElementById('prezzo-totale-bevanda');
+                                try {
+                                    const qty = Math.max(1, parseInt(qtyEl?.textContent || '1', 10) || 1);
+                                    if (pendingPrezzo && out) {
+                                        out.textContent = (Number(String(pendingPrezzo).replace(',', '.')) * qty).toFixed(2);
+                                    }
+                                    // opzionale: mostra il nome in un elemento dedicato se lo desideri
+                                    // es: document.getElementById('select-bevanda-label')?.textContent = pendingNome || '';
+                                } catch (e) { /* ignore */ }
+                            }
+
+                            // pulizia flag pending
+                            try { delete modalEl.dataset.pendingBevanda; delete modalEl.dataset.pendingPrezzo; delete modalEl.dataset.pendingNome; } catch(e){}
+                        }
+                    } catch (e) { console.warn('Errore nel preselect della bevanda pending:', e); }
+
+                    // Aggiorna selettore partecipanti (toggle/popola) in modo idempotente
+                    try { toggleSelettorePartecipanti(); } catch (e) { /* ignore */ }
+
+                    try {
+                        const current = modalEl.querySelector('input[name="condivisione-bevanda"]:checked')?.value || document.querySelector('input[name="condivisione-bevanda"]:checked')?.value;
+                        if (current === 'gruppo') {
+                            if (typeof popolaSelettorePartecipanti === 'function') await popolaSelettorePartecipanti();
+                            else { try { popolaSelettorePartecipanti(); } catch(e) {} }
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    // Focus sul bottone di chiusura in modo sicuro:
+                    try {
+                        function tryFocus(el) {
+                            if (!el || typeof el.focus !== 'function') return;
+                            try { el.focus({ preventScroll: true }); } catch (err) { try { el.focus(); } catch(e){/*ignore*/} }
+                        }
+                        const closeBtn = modalEl.querySelector('.btn-close');
+                        if (closeBtn) {
+                            // aspetta che l'albero sia accessibile (nessun antenato con aria-hidden="true")
+                            const deadline = Date.now() + 600; // timeout massimo
+                            const checkAndFocus = () => {
+                                let cur = closeBtn;
+                                let visible = true;
+                                while (cur) {
+                                    try { if (cur.getAttribute && cur.getAttribute('aria-hidden') === 'true') { visible = false; break; } } catch(e){/*ignore*/}
+                                    cur = cur.parentElement;
+                                }
+                                if (visible || Date.now() > deadline) {
+                                    tryFocus(closeBtn);
+                                } else {
+                                    requestAnimationFrame(checkAndFocus);
+                                }
+                            };
+                            requestAnimationFrame(checkAndFocus);
+                        }
+                    } catch(e){ /* ignore focus errors */ }
+                });
+
+                // radio change binding scoping al modal per evitare duplicazioni
+                try {
+                    modalEl.querySelectorAll('input[name="condivisione-bevanda"]').forEach(r => {
+                        if (!r.dataset.boundChange) {
+                            r.addEventListener('change', () => toggleSelettorePartecipanti());
+                            r.dataset.boundChange = '1';
+                        }
+                    });
+                } catch(e){ /* ignore */ }
+
+                // Prima che il modal venga nascosto, se un discendente ├¿ attualmente focalizzato,
+                // spostiamo il focus fuori (body) per evitare che aria-hidden venga bloccato.
+                try {
+                    if (!modalEl.dataset.boundHideFocus) {
+                        modalEl.addEventListener('hide.bs.modal', () => {
+                            try {
+                                const active = document.activeElement;
+                                if (active && modalEl.contains(active)) {
+                                    try { (document.body || document.documentElement).focus(); } catch(e){}
+                                    try { if (document.activeElement === active) active.blur(); } catch(e){}
+                                }
+                            } catch(e){}
+                        });
+                        modalEl.dataset.boundHideFocus = '1';
+                    }
+                } catch(e){ /* ignore */ }
+
+                modalEl.dataset.boundBevande = '1';
+            }
+        } catch (e) {
+            console.warn('apriModalBevande: errore durante il binding dei listener:', e);
+        }
+
+        // Prima di mostrare: rimuoviamo il focus da qualsiasi elemento attivo (specialmente se ├¿ dentro il modal)
+        try {
+            const active = document.activeElement;
+            if (active) {
+                // se il focus ├¿ dentro il modal o comunque potrebbe restare su un elemento che poi sar├á nascosto,
+                // blur immediatamente; requestAnimationFrame per lasciare al browser il tempo di processare.
+                try { if (active && (modalEl.contains(active) || active.matches && active.matches('#modal-bevande *'))) active.blur(); } catch(e){ try { active.blur(); } catch(e){} }
+            }
+        } catch(e){/*ignore*/}
+
+        // Mostriamo il modal nel prossimo frame per dare tempo al blur di essere applicato
+        const bsModal = new bootstrap.Modal(modalEl);
+        requestAnimationFrame(() => {
+            try { bsModal.show(); } catch(e) { console.error('Errore mostrando modal-bevande:', e); }
+        });
+    } catch (err) {
+        console.error('apriModalBevande: errore inatteso', err);
+    }
+}
+function aggiungiBevandaAlCarrello() {
+    if (!parametriUrl.cliente) {
+        alert('Errore: cliente non specificato');
+        return;
+    }
+    
+    const select = document.getElementById('select-bevanda');
+    const bevandaTesto = select.options[select.selectedIndex].text;
+    
+    // Estrai nome e prezzo
+    const matchNome = bevandaTesto.match(/^([^-Ôé¼]+)/);
+    const matchPrezzo = bevandaTesto.match(/Ôé¼(\d+\.?\d*)/);
+    
+    const nomeBevanda = matchNome ? matchNome[0].trim() : bevandaTesto;
+    const prezzoBevanda = matchPrezzo ? parseFloat(matchPrezzo[1]) : 0;
+    const bevandaId = select.value;
+    
+    const tipoCondivisione = (document.querySelector('input[name="condivisione-bevanda"]:checked') || {}).value || 'personale';
+    
+    // Raccogli lista partecipanti se condivisione === 'gruppo'
+    let partecipanti = [];
+    if (tipoCondivisione === 'gruppo') {
+        try {
+            const modalEl = document.getElementById('modal-bevande');
+            const container = modalEl ? modalEl.querySelector('#partecipanti-list') : document.getElementById('partecipanti-list');
+            if (container) {
+                partecipanti = Array.from(container.querySelectorAll('.partecipante-checkbox'))
+                    .filter(cb => cb.checked)
+                    .map(cb => ({ lettera: cb.value, sessione_cliente_id: cb.dataset.sessioneClienteId || null }));
+            }
+        } catch(e) {
+            partecipanti = [];
+        }
+    }
+
+    // Aggiungi al carrello (includiamo partecipanti per la condivisione)
+    carrello.push({
+        id: bevandaId,
+        nome: `${nomeBevanda} ${tipoCondivisione === 'tavolo' ? '(per tavolo)' : ''}`,
+        prezzo: prezzoBevanda,
+        cliente: parametriUrl.cliente,
+        timestamp: new Date().toISOString(),
+        tipo: 'bevanda',
+        condivisione: tipoCondivisione,
+        partecipanti: partecipanti
+    });
+    
+    // Prima di chiudere il modal: rimuoviamo il focus dagli elementi attivi all'interno del modal
+    try {
+        const modalEl = document.getElementById('modal-bevande');
+        const active = document.activeElement;
+        if (active && modalEl && modalEl.contains(active)) {
+            try { active.blur(); } catch (e) { /* ignore */ }
+            // garantiamo che il browser abbia applicato il blur prima di chiamare hide()
+            // una breve micro-wait riduce la probabilit├á che bootstrap imposti aria-hidden
+        }
+    } catch (e) { /* ignore safe */ }
+
+    // Chiudi modal (con un micro-delay per essere pi├╣ sicuri che il blur sia stato processato)
+    try {
+        const modalEl = document.getElementById('modal-bevande');
+        const instance = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+        if (instance) {
+            // small delay to allow blur to take effect before bootstrap manipola aria-hidden
+            setTimeout(() => {
+                try { instance.hide(); } catch (e) { /* ignore */ }
+            }, 20);
+        }
+    } catch (e) { /* ignore */ }
+    
+    // Aggiorna UI
+    aggiornareCarrelloUI();
+    mostraNotifica(`${nomeBevanda} aggiunta al carrello`);
+}
+
+// ================= INVIO ORDINE =================
+async function inviaOrdine() {
+    if (carrello.length === 0) {
+        alert('Il carrello ├¿ vuoto!');
+        return;
+    }
+    
+    if (!parametriUrl.cliente) {
+        alert('Errore: cliente non specificato!');
+        return;
+    }
+    
+    // Riepilogo ordine
+    let riepilogo = 'RIEPILOGO ORDINE:\n\n';
+    
+    carrello.forEach(item => {
+        riepilogo += `ÔÇó ${item.nome}: Ôé¼${item.prezzo.toFixed(2)}\n`;
+    });
+    
+    const totale = carrello.reduce((sum, item) => sum + item.prezzo, 0);
+    riepilogo += `\nTOTALE: Ôé¼${totale.toFixed(2)}`;
+    
+    if (!confirm(riepilogo + '\n\nConfermi l\'invio dell\'ordine alla cucina?')) {
+        return;
+    }
+    
+    // Disabilita il pulsante per evitare invii doppi e mostra spinner
+    const btnInvia = document.getElementById('btn-invia-ordine');
+    let prevHtml = null;
+    if (btnInvia) {
+        if (btnInvia.disabled) return; // gi├á in invio
+        prevHtml = btnInvia.innerHTML;
+        btnInvia.disabled = true;
+        btnInvia.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Invio...';
+    }        
+		// Prepara dati per l'API (assicuriamoci di avere sessione_id valido)
+if (!parametriUrl.sessione_id) {
+    // Proviamo a risolvere l'ID di sessione dal token (se presente)
+    if (parametriUrl.sessione) {
+        try {
+            const resp = await fetch('../api/tavoli/sessione-info.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessione_token: parametriUrl.sessione }),
+                cache: 'no-store',
+                credentials: 'same-origin'
+            });
+            if (resp.ok) {
+                const info = await resp.json();
+                if (info && info.success) {
+                    // assegniamo possibilmente diversi nomi restituiti dall'API
+                    parametriUrl.sessione_id = info.sessione_id || info.sessione_cliente_id || info.session_id || null;
+                    if (!parametriUrl.sessione_id && info.data && (info.data.sessione_id || info.data.sessione_cliente_id || info.data.session_id)) {
+                        parametriUrl.sessione_id = info.data.sessione_id || info.data.sessione_cliente_id || info.data.session_id;
+                    }
+                } else {
+                    console.warn('sessione-info non ha trovato la sessione:', info);
+                }
+            } else {
+                console.warn('sessione-info HTTP error:', resp.status);
+            }
+        } catch (e) {
+            console.warn('Errore risoluzione sessione-info:', e);
+        }
+    }
+}
+
+// Costruiamo ordineData includendo sessione_id (se disponibile) e reincludiamo sessione_token nel body
+// Prima creiamo l'array ordine separatamente per poterlo verificare
+let sourceCart = [];
+try {
+  // Chiediamo prima alle API "dedicate" ma useremo il risultato solo se non ├¿ vuoto.
+  if (typeof getCarrello === 'function') {
+    sourceCart = getCarrello() || [];
+  } else if (window.AppState && typeof window.AppState.getCarrello === 'function') {
+    sourceCart = window.AppState.getCarrello() || [];
+  } else {
+    sourceCart = [];
+  }
+} catch (e) {
+  sourceCart = [];
+}
+
+// Fallback robusto: se le sorgenti sopra hanno restituito vuoto, usiamo window.carrello o la variabile locale
+if ((!Array.isArray(sourceCart) || sourceCart.length === 0) && Array.isArray(window.carrello) && window.carrello.length) {
+  sourceCart = window.carrello.slice();
+} else if ((!Array.isArray(sourceCart) || sourceCart.length === 0) && typeof carrello !== 'undefined' && Array.isArray(carrello) && carrello.length) {
+  sourceCart = carrello.slice();
+}
+
+const ordine = (Array.isArray(sourceCart) ? sourceCart : []).map(item => ({
+    id: item.id,
+    quantita: Number(item.quantita || item.qty || 1),
+    cliente: item.cliente || parametriUrl.cliente,
+    nome: item.nome,
+    prezzo: item.prezzo,
+    // includiamo partecipanti se presenti (accettiamo sia array di oggetti che array di stringhe)
+    partecipanti: Array.isArray(item.partecipanti)
+      ? item.partecipanti
+      : (item.partecipanti ? [item.partecipanti] : [])
+}));
+
+// Se non ci sono articoli, blocchiamo l'invio immediatamente
+if (!Array.isArray(ordine) || ordine.length === 0) {
+    alert('Il carrello ├¿ vuoto. Aggiungi almeno un articolo prima di inviare.');
+    // Se il pulsante era stato disabilitato, riabilitiamolo e ripristiniamone il testo
+    if (typeof btnInvia !== 'undefined' && btnInvia) {
+        btnInvia.disabled = false;
+        if (typeof prevHtml !== 'undefined' && prevHtml !== null) btnInvia.innerHTML = prevHtml;
+    }
+    return;
+}
+
+const ordineData = {
+    // sessione_id richiesto dal server: preferiamo parametriUrl.sessione_id risolto
+    sessione_id: parametriUrl.sessione_id || parametriUrl.sessione_cliente_id || parametriUrl.session_id || null,
+    // session_id forzato numerico se possibile (compatibilit├á)
+    session_id: (typeof parametriUrl.sessione_id === 'number' && !isNaN(parametriUrl.sessione_id))
+                ? parametriUrl.sessione_id
+                : (parametriUrl.sessione_id ? Number(parametriUrl.sessione_id) : (parametriUrl.session_id && !isNaN(Number(parametriUrl.session_id)) ? Number(parametriUrl.session_id) : null)),
+    sessione_cliente_id: parametriUrl.sessione_cliente_id || parametriUrl.session_id || null,
+    // reincludiamo il token nel body perch├® l'API sembra ancora richiederlo
+    sessione_token: parametriUrl.sessione || null,
+    tavolo_id: parametriUrl.tavolo ? parseInt(parametriUrl.tavolo) : null,
+    ordine: ordine
+};
+try {
+        // Invia all'API usando Authorization header per la sessione (se presente)
+        const headers = { 'Content-Type': 'application/json' };
+        if (parametriUrl.sessione) headers['Authorization'] = 'Bearer ' + parametriUrl.sessione;
+
+        const response = await fetch('../api/ordini/crea-ordine.php', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(ordineData),
+            cache: 'no-store',
+            credentials: 'same-origin'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostraNotifica('Ordine registrato con successo!');
+            
+            // Reset carrello
+            carrello = [];
+            aggiornareCarrelloUI();
+            
+        } else {
+            alert('ERRORE nell\'invio dell\'ordine: ' + (result.error || 'Errore sconosciuto'));
+        }
+        
+    } catch (error) {
+        alert('ERRORE di connessione: ' + error.message);
+    } finally {
+        // Riabilita il pulsante e ripristina testo (safe guard)
+        try {
+            if (typeof btnInvia !== 'undefined' && btnInvia) {
+                btnInvia.disabled = false;
+                if (typeof prevHtml !== 'undefined' && prevHtml !== null) {
+                    try { btnInvia.innerHTML = prevHtml; } catch(e){}
+                }
+            }
+        } catch(e){}
+    }
+}
+
+// ================= STILI DINAMICI =================
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); }
+    }
+`;
+document.head.appendChild(style);
+
+// Fix globale: se un elemento diventa aria-hidden="true" e contiene l'elemento con focus,
+// rimuoviamo/trasferiamo il focus immediatamente per evitare warning ARIA.
+(function () {
+  try {
+    if (!('MutationObserver' in window)) return;
+    const onAttr = function (mutations) {
+      try {
+        mutations.forEach(m => {
+          if (m.type !== 'attributes') return;
+          if (m.attributeName !== 'aria-hidden') return;
+          const target = m.target;
+          try {
+            if (!target) return;
+            const val = target.getAttribute && target.getAttribute('aria-hidden');
+            if (String(val) !== 'true') return;
+            const active = document.activeElement;
+            if (!active) return;
+            // se l'elemento attivo ├¿ dentro il target (o ├¿ il target), rimuoviamo focus
+            if (target.contains(active)) {
+              try {
+                // prima blur diretto
+                active.blur && active.blur();
+              } catch (e) {}
+              try {
+                // spostiamo il focus su body in modo sicuro (per assistive tech)
+                (document.body || document.documentElement).focus && (document.body || document.documentElement).focus();
+              } catch (e) {}
+            }
+          } catch (e) { /* ignore per singola mutation */ }
+        });
+      } catch (e) { /* ignore */ }
+    };
+
+    const mo = new MutationObserver(onAttr);
+    mo.observe(document.documentElement || document.body, { attributes: true, subtree: true, attributeFilter: ['aria-hidden'] });
+
+    // export for debug / eventuale disattivazione
+    try { window._ariaHiddenBlurObserver = mo; } catch (e) {}
+  } catch (e) {
+    // non bloccante
+    console.warn('aria-hidden observer init failed', e);
+  }
+})();
