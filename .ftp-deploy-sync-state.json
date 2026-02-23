@@ -1,0 +1,581 @@
+{
+    "description": "DO NOT DELETE THIS FILE. This file is used to keep track of which files have been synced in the most recent deployment. If you delete this file a resync will need to be done (which can take a while) - read more: https://github.com/SamKirkland/FTP-Deploy-Action",
+    "version": "1.0.0",
+    "generatedTime": 1770916711910,
+    "data": [
+        {
+            "type": "file",
+            "name": ".htaccess",
+            "size": 809,
+            "hash": "58104939c214d6026380fc5c9ad4179e52eba2a739c8ceae4ef9877738ed7817"
+        },
+        {
+            "type": "file",
+            "name": "CODE_OF_CONDUCT.md",
+            "size": 1879,
+            "hash": "d190c36d008017bc3061a8b839636921ac13d8e9ef809bf2a46d5a4b9846c806"
+        },
+        {
+            "type": "file",
+            "name": "CONTRIBUTING.md",
+            "size": 515,
+            "hash": "f831c1baa549f0ec72d8c17fd4ef0f5b58effebb69d8eaa886dec5bb35eaa72e"
+        },
+        {
+            "type": "file",
+            "name": "LICENSE",
+            "size": 1077,
+            "hash": "04cd1b995633b8021760b2b4a20d3fc54300438e9b542fea151634aa37b165f5"
+        },
+        {
+            "type": "file",
+            "name": "README.md",
+            "size": 20,
+            "hash": "c17a416ce526dc9b549f9f05dc3f56952cfc1322c8bbf4f8bd68c375535f61fa"
+        },
+        {
+            "type": "folder",
+            "name": "admin"
+        },
+        {
+            "type": "folder",
+            "name": "api"
+        },
+        {
+            "type": "folder",
+            "name": "app"
+        },
+        {
+            "type": "file",
+            "name": "auto_merge.ps1",
+            "size": 1785,
+            "hash": "d12ac4a96226706a6c56897bb48d012fe82e958ffa60667b02ecde45b908927e"
+        },
+        {
+            "type": "file",
+            "name": "auto_merge_fixed.ps1",
+            "size": 1889,
+            "hash": "c5633ab70c4674121b5d7c6fd800a75cf1a1c0edce28a9496421a343a9a653df"
+        },
+        {
+            "type": "folder",
+            "name": "camerieri"
+        },
+        {
+            "type": "folder",
+            "name": "config"
+        },
+        {
+            "type": "folder",
+            "name": "cucina"
+        },
+        {
+            "type": "folder",
+            "name": "docs"
+        },
+        {
+            "type": "file",
+            "name": "fix_menu_renderer.ps1",
+            "size": 869,
+            "hash": "236e2641c0a56d6364581a1969dadcfc93cbbfbf522b879dbcfb3fa7d3b16475"
+        },
+        {
+            "type": "file",
+            "name": "fix_menu_renderer2.ps1",
+            "size": 1204,
+            "hash": "a5b66706e9cb1bf4a57a6fbcd58feedc9ad483d584ecc31ec43458a8b6a92177"
+        },
+        {
+            "type": "folder",
+            "name": "includes"
+        },
+        {
+            "type": "file",
+            "name": "index.html",
+            "size": 316,
+            "hash": "788847cc338e08b4915329d6ef917a620a64d488c807a391da8f9cce95ac8af0"
+        },
+        {
+            "type": "file",
+            "name": "login.php",
+            "size": 6808,
+            "hash": "ffc6c2fdc60c3e944a0086f97b08ec53f8fd0b6c13ac045cc9db3216035d841e"
+        },
+        {
+            "type": "file",
+            "name": "menu_js.txt",
+            "size": 68967,
+            "hash": "04be774c94bfaae41c650ee7e4a4debdb82a2d790dc9c7c98226e02926b6e7bc"
+        },
+        {
+            "type": "file",
+            "name": "menu_renderer_head.txt",
+            "size": 12444,
+            "hash": "866e255826dbfa9895e5938af479a21c6cb1fe6adb87a84742e33ec5a370eaa3"
+        },
+        {
+            "type": "file",
+            "name": "publish-pr.ps1",
+            "size": 8067,
+            "hash": "2284013b018aa65080ebaaf0700b10adc848d34ad3a1f9246370e2a13f089605"
+        },
+        {
+            "type": "file",
+            "name": "admin/tavoli.php",
+            "size": 3017,
+            "hash": "d5290667c668454d46c5780346eb67053a77e9928d09bddd257e48e65386ac38"
+        },
+        {
+            "type": "file",
+            "name": "admin/dashboard.php",
+            "size": 6797,
+            "hash": "4b0d7131fab9b486b73d37bf01557b920505f8109e1cbc87b59a97d986a9f4aa"
+        },
+        {
+            "type": "folder",
+            "name": "api/admin"
+        },
+        {
+            "type": "folder",
+            "name": "api/bevande"
+        },
+        {
+            "type": "folder",
+            "name": "api/clienti"
+        },
+        {
+            "type": "file",
+            "name": "api/db.php",
+            "size": 1,
+            "hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+        },
+        {
+            "type": "folder",
+            "name": "api/menu"
+        },
+        {
+            "type": "folder",
+            "name": "api/ordini"
+        },
+        {
+            "type": "folder",
+            "name": "api/tavoli"
+        },
+        {
+            "type": "folder",
+            "name": "api/utilita"
+        },
+        {
+            "type": "folder",
+            "name": "app/admin"
+        },
+        {
+            "type": "folder",
+            "name": "app/inizializza"
+        },
+        {
+            "type": "file",
+            "name": "app/menu-categoria.html",
+            "size": 22045,
+            "hash": "eafdca5d16cf196c861b5f13457d4828c19df31fb80dbbf90c812e6270d5c31e"
+        },
+        {
+            "type": "file",
+            "name": "app/menu-events.js",
+            "size": 6346,
+            "hash": "94cbdf5055d363e6b7b4a19656aaa1222b5ac538b95fcb1a9c66202b38d10877"
+        },
+        {
+            "type": "file",
+            "name": "app/menu-modals.js",
+            "size": 55974,
+            "hash": "5c74df1557dd793adcb40c2349532917a01ab871d5ad82ff0427f218db16726c"
+        },
+        {
+            "type": "file",
+            "name": "app/menu.css",
+            "size": 7338,
+            "hash": "6863da6c04ba82e4b4fe7496557af7e504eeb2e144b189e4a949b18dd10c1656"
+        },
+        {
+            "type": "file",
+            "name": "app/menu.html",
+            "size": 12515,
+            "hash": "5d1526c314349a46a53cf398c6cd351f8e2d00f5f65d7d5433ed51888aeef42d"
+        },
+        {
+            "type": "file",
+            "name": "app/menu.js",
+            "size": 66759,
+            "hash": "c6ebf4693237e3896073032689364f7772f4a96515c599d8c10b191d1a494c04"
+        },
+        {
+            "type": "file",
+            "name": "app/menu.js.bak",
+            "size": 69609,
+            "hash": "3023e9e969702ed70c7009fede987ec55131ecb9d3bfc7f1ecf021dbcf5009f3"
+        },
+        {
+            "type": "file",
+            "name": "app/menu.js.pre-insert.bak",
+            "size": 68822,
+            "hash": "748f3520b1075d40930aa15cc112a3f4b453e36a92a15297a4f1a471f086e35a"
+        },
+        {
+            "type": "file",
+            "name": "camerieri/.htaccess",
+            "size": 17,
+            "hash": "59b9d4c6e788d509278ecc67c8f9949d87ba7e5a3bb027816caf5fb70c776e0d"
+        },
+        {
+            "type": "file",
+            "name": "camerieri/inizializza.php",
+            "size": 23384,
+            "hash": "2f1e6e10a63766e4e4be5c3731f71c162e2eac16633f5fc67bf3b3dcfb4857c0"
+        },
+        {
+            "type": "file",
+            "name": "camerieri/login.php",
+            "size": 7600,
+            "hash": "29117da6aec66438f9220d11522c6f7b0a32f0f88485c23bfde421547004dd2b"
+        },
+        {
+            "type": "file",
+            "name": "camerieri/reset-tavoli.php",
+            "size": 265,
+            "hash": "09dd116fb27253928e129be9f3597e0bedd0ef499d74c5416354d9ee1a4b74de"
+        },
+        {
+            "type": "file",
+            "name": "camerieri/logout.php",
+            "size": 95,
+            "hash": "4898bb9ba94aee15feb63dd45e46400b4a4ccd73aeca41abbc6cd58432200f61"
+        },
+        {
+            "type": "file",
+            "name": "config/config.sample.php",
+            "size": 1282,
+            "hash": "6f47692dd3862fcf04d5cc166825bc25b66316a246eadd981a0826e57f43fc18"
+        },
+        {
+            "type": "file",
+            "name": "cucina/index.php",
+            "size": 14493,
+            "hash": "3c5b7dfcda58a6adf66ab3906032bda31df7a6f3ed353aaed2117468f0e78d2b"
+        },
+        {
+            "type": "file",
+            "name": "docs/index.html",
+            "size": 176,
+            "hash": "b05c6eb852be43f3e5a4ca52e2a88078968bfbe84772016510ce5343026ef8bc"
+        },
+        {
+            "type": "file",
+            "name": "includes/auth.php",
+            "size": 1472,
+            "hash": "3a4a42efb5282dcb2511738806dd0c10b62d7396950943ccd55768649d84f10d"
+        },
+        {
+            "type": "file",
+            "name": "api/admin/elimina-tavolo.php",
+            "size": 741,
+            "hash": "7c21a3dfa32c57f991d7c72ec9e38f520243253a1bc527f4e4e5eb96b1aa1ba2"
+        },
+        {
+            "type": "file",
+            "name": "api/bevande/aggiungi-bevanda.php",
+            "size": 5276,
+            "hash": "c15fde8f7a50d10ddb9918d651ed2e71fa7eb5f50303ace1b69a136df6a8bcb2"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/cancella-cliente-singolo.php",
+            "size": 1419,
+            "hash": "2cae3799821cd59212fa5a2430b37d80473ab1f222e858f724b0ef678cd0e2c3"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/get-clienti-registrati.php",
+            "size": 7094,
+            "hash": "913c74f3e837ac0279b566f3903e383d311f77e18d3615552aedca5a68a48ffc"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/get-clienti.php",
+            "size": 1627,
+            "hash": "f5aae1d432f58b027d10efc91a39d52f20193d63faeecf8fd14d742847d264e9"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/registra-cliente.php",
+            "size": 2650,
+            "hash": "babb2e0af2db4543049b533347fda1ea90c207e06bf6849a23a15c7bf7b1785f"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/resetta-clienti-tavolo.php",
+            "size": 1225,
+            "hash": "3b3e0f5c53068b3ea4f3ff1361d41beb32ccf3a99a1903c183f0de93bacec877"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/salva-cliente-manuale.php",
+            "size": 3153,
+            "hash": "0d03ebc8b0a51a25d7a834cc1368483f97f65a45c366782516d3641d84149bf2"
+        },
+        {
+            "type": "file",
+            "name": "api/clienti/sessione-clienti.php",
+            "size": 7683,
+            "hash": "f9fc616675a783218477b867be270e97f08f726a73e80288edebc6772c6d1305"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/crea-piatto.php",
+            "size": 4212,
+            "hash": "978846da42732b5bb1b66914534e3fca181035d3def28d7c575f40dfc6e0728f"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/crea-sottocategoria.php",
+            "size": 3210,
+            "hash": "7535ebb1aa900c52d2df88e6a9f0ae4b2d16de5ae1becfd89679ea90ab591803"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/menu.php",
+            "size": 5925,
+            "hash": "220c2ee68dbd28f03aeaf9f40077e5e3cc6a4eadc3a40d96a0296568b94cc6b8"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/riordina-categorie.php",
+            "size": 2349,
+            "hash": "a34137e9f3b7ee743fc4b8c189630bff145c611d1e31b3044a4ee0002eda30ca"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/riordina-piatti.php",
+            "size": 3342,
+            "hash": "11d0ffdd64c2858e3695b53239abdd6c8a27935c999238b6e92f695be581a925"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/riordina-sottocategorie.php",
+            "size": 2723,
+            "hash": "b6bdb7cfec561de5926c7df16aef5e0cd39677f5c16b95be9b45d87afd1732d3"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/update-categoria.php",
+            "size": 2176,
+            "hash": "e752aa6f9eb96c25d0b4ecd61020919bc856c6d31127be6068af4a87eb834924"
+        },
+        {
+            "type": "file",
+            "name": "api/menu/update-piatto.php",
+            "size": 4897,
+            "hash": "f5d8af041d3dc8084b29d3e7af6d5744be6e2769c11e48d9649fa43bc663f152"
+        },
+        {
+            "type": "file",
+            "name": "api/ordini/cambia-stato-piatto.php",
+            "size": 788,
+            "hash": "5922816470f309d1829b4786c70437dba56831fb31d594ce54dea729e484c14a"
+        },
+        {
+            "type": "file",
+            "name": "api/ordini/crea-ordine.php",
+            "size": 9911,
+            "hash": "d2b4e6ac996b29ab90857a70359551ea4011f173ee97ccf569e86c36eb4703e8"
+        },
+        {
+            "type": "file",
+            "name": "api/ordini/get-ordini-cliente.php",
+            "size": 11048,
+            "hash": "b83ae6df6e214e4fd8a6613486d094eae4e0740ea7af2942088e8107bb2103d2"
+        },
+        {
+            "type": "file",
+            "name": "api/ordini/ordini-cucina.php",
+            "size": 1394,
+            "hash": "0794166d98f09448fba8d8897099901a15db599e83ee3eb33deeac008dd101c1"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/aggiorna-stato-tavolo.php",
+            "size": 1538,
+            "hash": "0a53148243b7b22467c343326268f5428274fa214bfcf7e62dd5235614d89154"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/crea-tavolo.php",
+            "size": 4545,
+            "hash": "7826e839c0d6a50429cc51b9bae802abcddc5572fee144d494b4eb6d05c4d47b"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/inizializza-tavolo.php",
+            "size": 8865,
+            "hash": "d99b099e48167457beb82b90fde7e7573ad7cfc76dc3e15e1697ba79a9d07cd5"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/libera-tavolo.php",
+            "size": 2141,
+            "hash": "95601b2bb5d559406c5fc75d0b196d0a24875f22148470029532bbade6475518"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/sessione-info.php",
+            "size": 1752,
+            "hash": "6cd019000062228b891061cf53dce319206e97c22fc6b17e5c2f01670b44f0eb"
+        },
+        {
+            "type": "file",
+            "name": "api/tavoli/sessione-tavolo.php",
+            "size": 3464,
+            "hash": "1e9f0ec401f4e24600d0e9276ef9ae67a36b5c959f91cd74277a9442f3110ce7"
+        },
+        {
+            "type": "file",
+            "name": "api/utilita/get-lettere-occupate.php",
+            "size": 1065,
+            "hash": "7db4cb8fb75d719f10c8c3bbd1841c51620d6df19bb34f1e2be2b1097ceb228e"
+        },
+        {
+            "type": "file",
+            "name": "app/admin/admin-menu.css",
+            "size": 2627,
+            "hash": "28fb2a0ccd76a274ac5f6f059a284aa9139cd28aa4eac6ffcee7efe32c4b2143"
+        },
+        {
+            "type": "file",
+            "name": "app/admin/admin-menu.html",
+            "size": 12697,
+            "hash": "be62a53dc627faef81c76991fcccc77f7428142ae5efe957c143d7270c9b6d9a"
+        },
+        {
+            "type": "file",
+            "name": "app/admin/admin-menu.js",
+            "size": 36002,
+            "hash": "8634eda2028a3ed4d4d10e854183ef45e56e633c717795f4891580a18765287b"
+        },
+        {
+            "type": "folder",
+            "name": "app/inizializza/css"
+        },
+        {
+            "type": "folder",
+            "name": "app/inizializza/js"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/css/inizializza.css",
+            "size": 2957,
+            "hash": "7b0efb2001c036b9aa4d6a2c8ebd3d1ae5d4a38a06c2b6a09f2a490bebbdc268"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/api-service.js",
+            "size": 8238,
+            "hash": "db96c577ccfde3ae9b0d50b3ce8cd133bb45889fd1b47a52e7049ed20295eecf"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/bevande-manager.js",
+            "size": 12285,
+            "hash": "dfec7a4f45c1dc17a30757974e8a70c6127e5dc12bf814d7d5a7c504b99569cd"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/cart-ui.js",
+            "size": 4405,
+            "hash": "665d3fd3ddd64c6e923d476611ce698dcda067f4000c9d4ebb39b40b4a97aac7"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/cliente-badge-manager.js",
+            "size": 4900,
+            "hash": "b02226290d61c0d5d0bc052e47be5bf61c77e6aa0b755ddb9f73f5c75fe56032"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/cliente-manager.js",
+            "size": 21070,
+            "hash": "7fe9969d209a4563fea713169a489d1827b47a4ad5a13369e5b0a8ff79472870"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/cliente-config-manager.js",
+            "size": 14733,
+            "hash": "9952f3069b89b983a06f68f3e3edf83162a772fd14ed9aa0c40137f4977cca33"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/cliente-monitor-manager.js",
+            "size": 22064,
+            "hash": "0f2bd606dda3d57c40fd1182ca9159ee3f8bbf93af497b2516b3d3d916e74ae3"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/inizializza-main.js",
+            "size": 25231,
+            "hash": "3277f7ddd406e061dfada951584d475a5b75993d42ec9d077e7b24ce88fd4ca7"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/menu-renderer.js",
+            "size": 7070,
+            "hash": "91bcdcf47408b2fc6116471708119ae6ef3a2250f9a78317fa1933fd091ded4b"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/menu-renderer.js.bak",
+            "size": 7059,
+            "hash": "826a3313e0335aeb38116e2213a221ba40cd76e56714791311c3223d1394b002"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/menu-renderer.js.fixmenu.bak.20260206141721",
+            "size": 7059,
+            "hash": "aad3f8e1e0eb1692851a921f6f0f4320618cca92e9ce42022acc6304174f07b1"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/modal-accessibility.js",
+            "size": 3868,
+            "hash": "1adbdb4c9d08f4535f3df28247e160f015995f583a1a6cd3a87282f1b45acc21"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/modal-bevanda-toggle.js",
+            "size": 1876,
+            "hash": "412cf1150896fb4243c05ece0cc33e2c7c7095664b76184d14465be66e08e877"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/nuovo-tavolo.js",
+            "size": 4557,
+            "hash": "f24724c58836614c94fc6f3186ed3ee2a76ff58b55ce8bcbcca218e230c41231"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/state.js",
+            "size": 3599,
+            "hash": "1e43fe4eccc3921cdda03bccd643ee954002da0faadba10c05790a9356310796"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/state-shim.js",
+            "size": 4349,
+            "hash": "f3d5619d155da37d6551898e698630801ce07ccb39a43cf01074f6dda7640cc9"
+        },
+        {
+            "type": "file",
+            "name": "app/inizializza/js/tavolo-manager.js",
+            "size": 6007,
+            "hash": "7f32114efaef5a2d6c084542f95b0f87338bc583b9566299c34ef9eff9df819c"
+        }
+    ]
+}

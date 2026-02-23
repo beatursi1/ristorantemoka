@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Moka — Menù Categoria</title>
+  
+  <link rel="stylesheet" href="menu.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-dark: #2c3e50;
+      --accent-moka: #e74c3c;
+      --bg-app: #f8f9fa;
+    }
+
+    body { 
+      background-color: var(--bg-app); 
+      font-family: 'Inter', sans-serif;
+      padding-bottom: 140px; /* Spazio aumentato per il carrello mobile */
+    }
+
+    /* Riga 1: Torna indietro */
+    .nav-row-back {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+      border-bottom: 1px solid #dee2e6;
+      padding: 12px 0;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .btn-back-full {
+      color: #7f8c8d;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .btn-back-full:hover { color: var(--accent-moka); }
+
+    /* Riga 2: Titolo Categoria */
+    .nav-row-title {
+      background: #fff;
+      border-bottom: 2px solid #eee;
+      padding: 15px 0;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .category-main-title {
+      font-weight: 800;
+      font-size: 1.7rem;
+      color: var(--primary-dark);
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Pills Sottocategorie */
+    .subcategory-pills-container {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 5px 15px 20px;
+      scrollbar-width: none;
+      text-align: center;
+    }
+    .subcategory-pills-container::-webkit-scrollbar { display: none; }
+    
+    .pill-link {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      text-decoration: none;
+      margin: 0 5px;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .pill-link.active {
+      background: var(--accent-moka);
+      color: white;
+      border-color: var(--accent-moka);
+    }
+
+    /* Titolo Sezione Sottocategoria */
+    .subcategory-header-btn {
+      width: 100%;
+      background: var(--primary-dark);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .dish-card {
+      background: white;
+      border-radius: 18px;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .dish-name { font-weight: 700; font-size: 1.1rem; color: #1a1a1a; }
+    .dish-price { font-weight: 800; font-size: 1.2rem; color: #2ecc71; }
+
+    /* Pulsanti Quantità Pietanza */
+    .qty-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f3f5;
+      padding: 4px;
+      border-radius: 14px;
+    }
+
+    .btn-qty {
+      background: white;
+      color: var(--primary-dark);
+      border: 1px solid #dee2e6;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-qty-plus { background: var(--accent-moka); color: white; border: none; }
+    .btn-qty:active { transform: scale(0.9); }
+    
+    .qty-indicator { font-weight: 800; min-width: 20px; text-align: center; font-size: 1rem; }
+
+    /* CARRELLO PREMIUM FLOATING */
+    #carrello {
+      position: fixed;
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 22px;
+      z-index: 1050;
+      padding: 15px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #carrello:active { transform: scale(0.98); }
+    
+    .cart-info-mobile { line-height: 1.2; }
+    .cart-total-mobile { font-size: 1.3rem; font-weight: 800; color: var(--primary-dark); }
+    .btn-invia-mobile { font-weight: 800; text-transform: uppercase; padding: 12px 20px; border-radius: 12px; }
+  </style>
+</head>
+<body class="menu-page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="container">
+      <div class="row py-2">
+        <div class="col-12 text-center">
+          <h1 class="h5 mb-0"><i class="fas fa-utensils me-2"></i>RistoranteMoka</h1>
+        </div>
+      </div>
+      <div class="row py-1 align-items-center flex-nowrap">
+        <div class="col-6 d-flex align-items-center">
+          <i class="fas fa-table me-1"></i>
+          <span class="fw-semibold">Tavolo: <span id="tavolo-numero">--</span></span>
+        </div>
+        <div class="col-6 d-flex justify-content-end align-items-center">
+          <div class="d-flex align-items-center" style="max-width:260px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+            <span id="cliente-corrente-letter" class="badge bg-primary me-2">-</span>
+            <span id="cliente-corrente-nome" class="text-truncate">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="row py-1">
+        <div class="col-12 d-flex justify-content-center">
+          <button id="btn-visualizza-ordini" class="btn btn-ordini btn-sm w-100" type="button">
+            <i class="fas fa-history me-1"></i> I tuoi ordini
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row-back shadow-sm">
+    <div class="container">
+      <a href="#" id="btn-back-dynamic" class="btn-back-full">
+        <i class="fas fa-chevron-left me-2"></i> Torna indietro al Menu principale
+      </a>
+    </div>
+  </div>
+
+  <div class="nav-row-title shadow-sm">
+    <div class="container">
+      <h2 id="page-context-title" class="category-main-title">Menù</h2>
+    </div>
+  </div>
+
+  <main class="container">
+    <div id="subcategory-nav" class="subcategory-pills-container"></div>
+    <div id="menu-container">
+      <div class="text-center py-5" id="spinner-loading">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="mt-2 text-muted">Caricamento in corso...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL BEVANDE - RIPRISTINATO STRUTTURA TECNICA -->
+  <div class="modal fade" id="modal-bevande" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-wine-glass-alt me-2"></i>Aggiungi Bevande</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Seleziona bevanda</label>
+            <select class="form-select" id="select-bevanda">
+              <option value="7">Acqua naturale 1L - €2.50</option>
+              <option value="11">Acqua frizzante 1L - €2.50</option>
+              <option value="8">Vino rosso (bottiglia) - €18.00</option>
+              <option value="9">Vino bianco (bottiglia) - €16.00</option>
+              <option value="16">Birra artigianale 0.5L - €5.00</option>
+              <option value="10">Coca Cola 0.33L - €3.00</option>
+              <option value="12">Succo di frutta - €4.00</option>
+              <option value="13">Caffè - €1.50</option>
+            </select>
+            <div class="mt-3 text-center">
+                <label class="form-label d-block mb-2 small">Quantità</label>
+                <div class="contatore-quantita d-flex justify-content-center align-items-center gap-3">
+                    <button class="btn btn-outline-secondary" type="button" id="btn-bevanda-meno"><i class="fas fa-minus"></i></button>
+                    <span class="h4 mb-0" id="quantita-bevanda">1</span>
+                    <button class="btn btn-outline-secondary" type="button" id="btn-bevanda-piu"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="mt-2"><small class="text-muted">Totale: €<span id="prezzo-totale-bevanda">0.00</span></small></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Condivisione</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="condivisione-bevanda" id="cond-personale" value="personale" checked>
+              <label class="form-check-label" for="cond-personale"><i class="fas fa-user me-1"></i> Solo per me</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="condivisione-bevanda" id="cond-tavolo" value="tavolo">
+              <label class="form-check-label" for="cond-tavolo"><i class="fas fa-users me-1"></i> Per tutto il tavolo</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="condivisione-bevanda" id="cond-gruppo" value="gruppo">
+              <label class="form-check-label" for="cond-gruppo"><i class="fas fa-user-friends me-1"></i> Per me e per (seleziona gli altri)
+                <small id="gruppo-selezione-txt" class="text-muted ms-2"></small></label>
+            </div>
+
+            <!-- Selettore partecipanti (nascosto di default, gestito da menu.js) -->
+            <div id="selettore-partecipanti" style="display:none;" class="border rounded p-2 mb-3">
+              <div class="small text-muted mb-2">Seleziona i partecipanti (tu sarai incluso automaticamente):</div>
+              <div id="partecipanti-list" class="d-flex flex-wrap gap-2"></div>
+              <div id="selettore-error" class="text-danger small mt-2" style="display:none;">Seleziona almeno 1 partecipante oltre a te.</div>
+            </div>
+          </div>
+          <div class="alert alert-info small"><i class="fas fa-info-circle me-2"></i>Le bevande verranno aggiunte al carrello.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+          <button type="button" class="btn btn-primary" id="btn-modal-aggiungi-bevanda">Aggiungi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ORDINI - RIPRISTINATO STRUTTURA TECNICA -->
+  <div class="modal fade" id="modal-miei-ordini" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-history me-2"></i>I miei ordini</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div id="mio-ordini-loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="small text-muted mt-2">Caricamento ordini...</div>
+          </div>
+          <div id="mio-ordini-vuoto" class="d-none p-3 text-center">Nessun ordine trovato.</div>
+          <div id="mio-ordini-contenitore" class="d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modale Riepilogo Carrello -->
+  <div class="modal fade" id="modal-riepilogo-carrello" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold"><i class="fas fa-shopping-cart me-2 text-primary"></i>Il tuo Carrello</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div id="riepilogo-lista-piatti" class="mb-3">
+              <!-- Riempito dinamicamente via JS -->
+          </div>
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+              <span class="fw-bold">Totale da inviare:</span>
+              <span class="h4 mb-0 fw-bold text-success">€<span id="riepilogo-totale">0.00</span></span>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 flex-column">
+          <button type="button" class="btn btn-success w-100 py-3 fw-bold rounded-3 mb-2" onClick="confermaEInviaOrdine()">
+              <i class="fas fa-check-circle me-2"></i>CONFERMA E INVIA ORA
+          </button>
+          <button type="button" class="btn btn-link text-danger btn-sm" onClick="svuotaCarrello(); bootstrap.Modal.getInstance(document.getElementById('modal-riepilogo-carrello')).hide();">
+              <i class="fas fa-trash-alt me-1"></i>Svuota tutto il carrello
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+   <!-- CARRELLO PREMIUM -->
+  <div id="carrello" style="display: none;" onClick="if(event.target.tagName !== 'BUTTON' && event.target.tagName !== 'I' && !event.target.closest('a')) apriRiepilogoCarrello()">
+      <div class="container-fluid">
+          <div id="carrello-contenuto" style="display:none;"></div>
+          <div class="row align-items-center g-0">
+              <div class="col-7">
+                  <div class="d-flex align-items-center mb-1">
+                      <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 24px; height: 24px; font-size: 11px; font-weight: 800;">
+                          <span id="totale-articoli">0</span>
+                      </div>
+                      <span class="fw-bold text-dark" style="font-size: 0.95rem;">Pietanze <span class="text-primary">(vedi)</span></span>
+                  </div>
+                  <div class="fw-bold text-success" style="font-size: 1.5rem; letter-spacing: -1px;">€ <span id="totale-prezzo">0.00</span></div>
+              </div>
+              <div class="col-5 text-end">
+                  <button type="button" id="btn-invia-ordine" class="btn btn-success w-100 py-3 shadow-sm border-0" style="border-radius: 14px; font-weight: 800; background: linear-gradient(135deg, #2ecc71, #27ae60);" onClick="event.stopPropagation(); apriRiepilogoCarrello()">
+                      INVIA <i class="fas fa-paper-plane ms-2"></i>
+                  </button>
+<a href="javascript:void(0)" class="text-danger d-block mt-3 text-decoration-none text-center" 
+   style="font-size: 0.85rem; font-weight: 700; border: 1px solid #ffcfcf; border-radius: 8px; padding: 5px;" 
+   onClick="event.stopPropagation(); svuotaCarrello()">
+    <i class="fas fa-trash-alt me-1"></i> SVUOTA TUTTO IL CARRELLO
+</a>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script src="inizializza/js/modal-accessibility.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="inizializza/js/state.js"></script>
+  <script src="inizializza/js/state-shim.js"></script>
+  <script src="inizializza/js/cart-ui.js"></script>
+  <script src="inizializza/js/api-service.js"></script>
+  <script src="menu.js"></script>
+  <script src="menu-events.js"></script>
+  <script src="menu-modals.js"></script>
+
+  <script>
+    (function () {
+      const qs = new URLSearchParams(window.location.search);
+      const macroParam = (qs.get('macro') || '').toLowerCase().trim();
+
+      // --- FIX: Persistenza dei parametri (sessione, tavolo, cliente) al ritorno ---
+      document.getElementById('btn-back-dynamic').onclick = (e) => {
+        e.preventDefault();
+        const backParams = new URLSearchParams(window.location.search);
+        backParams.delete('macro'); // Rimuoviamo solo il parametro macro per tornare alla home corretta
+        window.location.href = 'menu.html?' + backParams.toString();
+      };
+
+      async function init() {
+        try {
+          const resp = await fetch('../api/menu/menu.php');
+          const data = await resp.json();
+          const categories = data.data || [];
+          
+          const macros = categories.map(c => {
+            let subs = (c.sottocategorie || [])
+              .filter(sub => sub.visibile != 0)
+              .map(sub => ({ nome: sub.nome, piatti: sub.piatti || [] }));
+            if (c.piatti && c.piatti.length) subs.unshift({ nome: `${c.nome} Classici`, piatti: c.piatti });
+            return { nome: c.nome, sottocategorie: subs };
+          });
+
+          const found = macros.find(m => m.nome.toLowerCase().includes(macroParam));
+          if (found) {
+            render(found);
+            // --- SINCRONIZZAZIONE BEVANDE ---
+            // Cerchiamo la macrocategoria bevande in tutto il menu caricato
+            const bevandeMacro = macros.find(m => m.nome.toLowerCase().includes('bevande'));
+            const select = document.getElementById('select-bevanda');
+            if (bevandeMacro && select) {
+              select.innerHTML = ''; // Svuotiamo le opzioni statiche (Acqua, Vino, ecc.)
+              bevandeMacro.sottocategorie.forEach(sub => {
+                sub.piatti.forEach(p => {
+                  const opt = document.createElement('option');
+                  opt.value = p.id;
+                  opt.textContent = `${p.nome} - €${parseFloat(p.prezzo).toFixed(2)}`;
+                  select.appendChild(opt);
+                });
+              });
+            }
+          }
+          else document.getElementById('menu-container').innerHTML = `<div class="alert alert-warning text-center">Categoria non trovata.</div>`;
+        } catch (e) { console.error(e); }
+      }
+
+      // Nuova funzione per aprire il modale pre-selezionando la bevanda corretta
+      window.apriModaleBevandaSpecifica = function(id, nome, prezzo) {
+        const select = document.getElementById('select-bevanda');
+        if (select) select.value = id;
+        
+        const modalEl = document.getElementById('modal-bevande');
+        if (modalEl) {
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }
+      };
+      function render(macro) {
+        document.getElementById('page-context-title').textContent = macro.nome;
+        const nav = document.getElementById('subcategory-nav');
+        const container = document.getElementById('menu-container');
+        container.innerHTML = '';
+        
+        macro.sottocategorie.forEach((sub, idx) => {
+          const pill = document.createElement('a');
+          pill.className = `pill-link ${idx === 0 ? 'active' : ''}`;
+          pill.textContent = sub.nome;
+          pill.href = `#sub-${idx}`;
+          pill.onclick = () => {
+            document.querySelectorAll('.pill-link').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+          };
+          nav.appendChild(pill);
+
+          const sec = document.createElement('section');
+          sec.id = `sub-${idx}`;
+          sec.className = "mb-5";
+          sec.innerHTML = `<div class="subcategory-header-btn"><span>${sub.nome}</span></div>`;
+          
+          sub.piatti.forEach(p => {
+            const div = document.createElement('div');
+            div.className = "dish-card";
+            
+            // Determiniamo se è una bevanda (controllando il nome della macrocategoria o del piatto)
+            const isBevanda = macro.nome.toLowerCase().includes('bevande') || (p.categoria && p.categoria.toLowerCase().includes('bevande'));
+            
+            // Definiamo l'azione del tasto +: se bevanda apre modale, altrimenti aggiunge direttamente
+            const azionePlus = isBevanda 
+              ? `apriModaleBevandaSpecifica(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${p.prezzo})`
+              : `aggiungereAlCarrello(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${p.prezzo})`;
+
+            div.innerHTML = `
+              <div class="dish-info">
+                <div class="dish-name">${p.nome}</div>
+                <div class="dish-description text-muted small">${p.descrizione || ''}</div>
+                <div class="mt-2">
+                  ${p.tempo_preparazione ? `<span class="badge bg-light text-dark border me-1"><i class="far fa-clock me-1"></i>${p.tempo_preparazione}m</span>` : ''}
+                  ${p.punti_fedelta ? `<span class="badge bg-warning text-dark border"><i class="fas fa-star me-1"></i>${p.punti_fedelta} pt</span>` : ''}
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="dish-price">&euro; ${parseFloat(p.prezzo).toFixed(2)}</div>
+                <div class="qty-btn-group mt-2">
+                    <button class="btn-qty btn-qty-minus" onclick="rimuovereDalCarrello(${p.id})"><i class="fas fa-minus"></i></button>
+                    <span class="qty-indicator" id="qty-${p.id}">0</span>
+                    <button class="btn-qty btn-qty-plus" onclick="${azionePlus}"><i class="fas fa-plus"></i></button>
+                </div>
+              </div>`;
+            sec.appendChild(div);
+          });
+          container.appendChild(sec);
+        });
+      }
+      window.addEventListener('load', init);
+    })();
+  </script>
+</body>
+</html>

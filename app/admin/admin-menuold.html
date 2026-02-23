@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestione menu — RistoranteMoka</title>
+
+  <!-- Bootstrap base per avere una grafica decente subito -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Possiamo riusare il tuo menu.css per coerenza visiva -->
+  <link rel="stylesheet" href="../menu.css" />
+  <!-- Stili specifici per l'area admin -->
+  <link rel="stylesheet" href="admin-menu.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h1 class="h4 mb-0"><i class="fas fa-tools me-2"></i>Gestione menu</h1>
+      </div>
+      <div>
+        <!-- CORREZIONE: Il link ora punta correttamente alla Dashboard Admin -->
+        <a href="../../admin/dashboard.php" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-arrow-left me-1"></i> Torna alla Dashboard
+        </a>
+      </div>
+    </div>
+
+    <div id="admin-alert" class="alert alert-info d-flex justify-content-between align-items-center">
+      <div>
+        <i class="fas fa-info-circle me-2"></i>
+        Qui l'admin può aggiungere, modificare o eliminare piatti.
+      </div>
+      <div id="admin-refresh-time" class="small text-muted"></div>
+    </div>
+
+    <!-- FORM AGGIUNGI PIATTO -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <i class="fas fa-plus-circle me-2"></i>
+          <strong>Aggiungi una nuova pietanza</strong>
+        </div>
+        <small class="text-muted">Compila i campi per aggiungere un nuovo piatto al menu.</small>
+      </div>
+      <div class="card-body">
+        <form id="form-aggiungi-piatto">
+          <div class="row g-3">
+            <!-- Categoria -->
+            <div class="col-md-4">
+              <label for="input-categoria" class="form-label">Categoria</label>
+              <select id="input-categoria" class="form-select" required>
+                <!-- riempita via JS con le categorie lette da menu.php --></select>
+            </div>
+
+            <!-- Sottocategoria (opzionale, dipende dalla categoria) -->
+            <div class="col-md-4">
+              <label for="input-sottocategoria" class="form-label">Sottocategoria</label>
+              <select id="input-sottocategoria" class="form-select">
+                <option value="">Nessuna sottocategoria</option>
+                <!-- riempita via JS in base alla categoria selezionata -->
+              </select>
+              <div class="form-text">Opzionale. Es: Antipasti di mare, Antipasti di terra.</div>
+            </div>
+
+            <!-- Nome piatto -->
+            <div class="col-md-4">
+              <label for="input-nome" class="form-label">Nome pietanza</label>
+              <input type="text" id="input-nome" class="form-control" placeholder="Es. Tagliata di manzo" required>
+            </div>
+
+            <!-- Descrizione -->
+            <div class="col-12">
+              <label for="input-descrizione" class="form-label">Descrizione</label>
+              <textarea id="input-descrizione" class="form-control" rows="2" placeholder="Es. Manzo alla griglia con rucola e scaglie di parmigiano"></textarea>
+            </div>
+
+            <!-- Prezzo, tempo, punti -->
+            <div class="col-md-4">
+              <label for="input-prezzo" class="form-label">Prezzo (€)</label>
+              <input type="number" step="0.01" min="0" id="input-prezzo" class="form-control" placeholder="Es. 14.00" required>
+            </div>
+
+            <div class="col-md-4">
+              <label for="input-tempo" class="form-label">Tempo di preparazione (minuti)</label>
+              <input type="number" min="0" id="input-tempo" class="form-control" placeholder="Es. 15">
+            </div>
+
+            <div class="col-md-4">
+              <label for="input-punti" class="form-label">Punti fedeltà</label>
+              <input type="number" min="0" id="input-punti" class="form-control" placeholder="Es. 14 (1 punto ogni €)">
+              <div class="form-text">Puoi lasciare vuoto: verrà considerato uguale agli euro del prezzo.</div>
+            </div>
+
+            <!-- Allergeni -->
+            <div class="col-12">
+              <label for="input-allergeni" class="form-label">Allergeni</label>
+              <input type="text" id="input-allergeni" class="form-control" placeholder="Es. Glutine, latte, frutta a guscio">
+              <div class="form-text">Elenca gli allergeni principali (separati da virgola). Puoi anche lasciare vuoto.</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <div id="form-aggiungi-msg" class="small"></div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-eye me-1"></i>Aggiungi piatto
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Contenitore categorie + piatti -->
+    <div id="categorie-container">
+      <div class="text-center py-4" id="admin-loading">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <div class="small text-muted mt-2">Caricamento menu...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Modifica Piatto -->
+  <div class="modal fade" id="modalModificaPiatto" tabindex="-1" aria-labelledby="modalModificaPiattoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="form-modifica-piatto">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalModificaPiattoLabel">Modifica piatto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="mod-piatto-id" />
+
+            <div class="mb-3">
+              <label for="mod-piatto-nome" class="form-label">Nome piatto</label>
+              <input type="text" class="form-control" id="mod-piatto-nome" required>
+            </div>
+
+            <!-- Sottocategoria in modale -->
+            <div class="mb-3">
+              <label for="mod-piatto-sottocategoria" class="form-label">Sottocategoria</label>
+              <select id="mod-piatto-sottocategoria" class="form-select">
+                <option value="">Nessuna sottocategoria</option>
+              </select>
+              <div class="form-text">Cambia la sottocategoria del piatto, se disponibile.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="mod-piatto-descrizione" class="form-label">Descrizione</label>
+              <textarea class="form-control" id="mod-piatto-descrizione" rows="2" placeholder="Descrizione del piatto"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="mod-piatto-prezzo" class="form-label">Prezzo (€)</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="mod-piatto-prezzo" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="mod-piatto-tempo" class="form-label">Tempo prep. (min)</label>
+                <input type="number" min="0" class="form-control" id="mod-piatto-tempo" placeholder="Es. 15">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="mod-piatto-punti" class="form-label">Punti fedeltà</label>
+                <input type="number" min="0" class="form-control" id="mod-piatto-punti" placeholder="Es. 14">
+                <div class="form-text">Se vuoto: 1 punto ogni euro.</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="mod-piatto-allergeni" class="form-label">Allergeni</label>
+              <textarea class="form-control" id="mod-piatto-allergeni" rows="2" placeholder="Es: Glutine, Latte, Uova"></textarea>
+              <div class="form-text">Lascia vuoto per rimuovere gli allergeni.</div>
+            </div>
+
+            <div id="mod-piatto-msg" class="small mt-1"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+            <button type="submit" class="btn btn-primary">Salva modifiche</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Modifica Categoria -->
+  <div class="modal fade" id="modalModificaCategoria" tabindex="-1" aria-labelledby="modalModificaCategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="form-modifica-categoria">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalModificaCategoriaLabel">Modifica categoria</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="mod-cat-id" />
+
+            <div class="mb-3">
+              <label for="mod-cat-nome" class="form-label">Nome categoria</label>
+              <input type="text" class="form-control" id="mod-cat-nome" required>
+            </div>
+
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="mod-cat-visibile" checked>
+              <label class="form-check-label" for="mod-cat-visibile">
+                Categoria visibile nel menu clienti
+              </label>
+            </div>
+
+            <div id="mod-cat-msg" class="small mt-1"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+            <button type="submit" class="btn btn-primary">Salva categoria</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Nuova Sottocategoria -->
+  <div class="modal fade" id="modalNuovaSottocategoria" tabindex="-1" aria-labelledby="modalNuovaSottocategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="form-nuova-sottocategoria">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalNuovaSottocategoriaLabel">Aggiungi sottocategoria</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="new-sub-cat-id" />
+
+            <div class="mb-3">
+              <label for="new-sub-nome" class="form-label">Nome sottocategoria</label>
+              <input type="text" class="form-control" id="new-sub-nome" required>
+            </div>
+
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="new-sub-visibile" checked>
+              <label class="form-check-label" for="new-sub-visibile">
+                Sottocategoria visibile nel menu clienti
+              </label>
+            </div>
+
+            <div id="new-sub-msg" class="small mt-1"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+            <button type="submit" class="btn btn-primary">Crea sottocategoria</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (necessario per le modali) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Logica admin -->
+  <script src="admin-menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>RistoranteMoka — Benvenuto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --moka-dark:   #2c3e50;
+            --moka-blue:   #4a6491;
+            --moka-gold:   #f39c12;
+            --moka-green:  #27ae60;
+            --moka-red:    #e74c3c;
+            --moka-viola:  #8e44ad;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 40px;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: linear-gradient(135deg, var(--moka-dark), var(--moka-blue));
+            color: white;
+            padding: 20px 0 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 700; margin: 0; }
+        .header .info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .info-pill {
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-lettera-header {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--moka-gold);
+            color: #1e293b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+
+        /* ── BENVENUTO ── */
+        .welcome-box {
+            background: white;
+            margin: 16px 16px 0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--moka-gold);
+        }
+        .welcome-box h2 { font-size: 1.1rem; font-weight: 700; color: var(--moka-dark); }
+        .welcome-box p  { font-size: 0.82rem; color: #64748b; margin: 4px 0 0; }
+
+        /* ── PASSPHRASE BOX ── */
+        .passphrase-box {
+            background: white;
+            margin: 12px 16px 0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .passphrase-box .pp-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pp-title .star { color: var(--moka-gold); font-size: 1rem; }
+
+        .btn-pp-attiva {
+            width: 100%;
+            background: var(--moka-gold);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-weight: 800;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-pp-attiva:hover { opacity: 0.88; }
+
+        #pp-campo-wrap { display: none; margin-top: 12px; }
+        #pp-input {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        #pp-input:focus { border-color: var(--moka-gold); }
+        #pp-input.success { border-color: var(--moka-green); background: #f0fdf4; }
+        #pp-input.error   { border-color: var(--moka-red);   background: #fff5f5; }
+        .btn-pp-invia {
+            width: 100%;
+            margin-top: 10px;
+            background: var(--moka-gold);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-pp-invia:hover { opacity: 0.88; }
+        .btn-pp-invia:disabled { opacity: 0.45; pointer-events: none; }
+
+        .pp-feedback {
+            font-size: 0.78rem;
+            margin-top: 7px;
+            min-height: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pp-feedback.ok   { color: var(--moka-green); }
+        .pp-feedback.err  { color: var(--moka-red); }
+        .pp-feedback.info { color: #64748b; }
+
+        .pp-whatsapp {
+            margin-top: 10px;
+        }
+        .pp-whatsapp a {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #25D366;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: opacity 0.2s;
+        }
+        .pp-whatsapp a:hover { opacity: 0.88; }
+        .pp-whatsapp .pp-wa-note { font-size: 0.7rem; color: #64748b; margin-top: 5px; }
+
+        /* Se già associata — mostra stato */
+        .pp-already {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0fdf4;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #166534;
+            font-weight: 600;
+        }
+        .pp-already i { font-size: 1.1rem; }
+
+        /* ── 4 SEZIONI ── */
+        .sezioni-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 16px 0;
+        }
+
+        .sezione-card {
+            border-radius: 16px;
+            padding: 22px 16px 18px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+        .sezione-card:active { transform: scale(0.97); }
+        .sezione-card:hover  { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,0.15); }
+        .sezione-card .s-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .sezione-card .s-label {
+            font-weight: 800;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .sezione-card .s-desc {
+            font-size: 0.7rem;
+            opacity: 0.85;
+            line-height: 1.3;
+        }
+        .sezione-card .s-arrow {
+            position: absolute;
+            bottom: 10px;
+            right: 12px;
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+
+        /* Colori sezioni */
+        .s-ordina  { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .s-offerte { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .s-punti   { background: linear-gradient(135deg, #8e44ad, #6c3483); }
+        .s-gioco   { background: linear-gradient(135deg, #27ae60, #1e8449); }
+
+        /* Badge punti sulla card */
+        .punti-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: none; /* visibile solo se ci sono punti */
+        }
+
+        /* ── LOADER ── */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .loader-overlay.hidden { display: none; }
+        .loader-overlay p { font-size: 0.85rem; color: #64748b; }
+
+        /* ── TOAST ── */
+        .toast-container { z-index: 9999; }
+
+        /* ── RESPONSIVE ── */
+        @media (min-width: 480px) {
+            .sezioni-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            .sezione-card .s-icon { width: 64px; height: 64px; font-size: 1.7rem; }
+        }
+        @media (min-width: 768px) {
+            .sezioni-grid { grid-template-columns: repeat(4, 1fr); max-width: 700px; margin: 16px auto 0; }
+            .welcome-box, .passphrase-box { max-width: 700px; margin-left: auto; margin-right: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+    <div class="spinner-border text-primary"></div>
+    <p>Caricamento...</p>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="container">
+        <div class="text-center">
+            <h1><i class="fas fa-utensils me-2"></i>RistoranteMoka</h1>
+        </div>
+        <div class="info-row mt-2">
+            <div class="info-pill">
+                <i class="fas fa-table"></i>
+                Tavolo <strong id="header-tavolo">—</strong>
+            </div>
+            <div class="info-pill">
+                <span class="badge-lettera-header" id="header-lettera">—</span>
+                <span id="header-nome">—</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BENVENUTO -->
+<div class="welcome-box">
+    <h2>👋 Benvenuto, <span id="nome-cliente-benvenuto">ospite</span>!</h2>
+    <p>Sei al tavolo <strong id="num-tavolo-benvenuto">—</strong>. Cosa vuoi fare oggi?</p>
+</div>
+
+<!-- PASSPHRASE BOX -->
+<div class="passphrase-box" id="pp-box">
+
+    <!-- Stato: non ancora inserita -->
+    <div id="pp-form-wrap">
+        <div class="pp-title">
+            <span class="star">★</span>
+            Chiave Moka — accumula punti fedeltà
+        </div>
+
+        <button class="btn-pp-attiva" id="btn-pp-attiva" onClick="apriCampoPassphrase()">
+            <i class="fas fa-star"></i> Attiva la tua Chiave Moka
+        </button>
+
+        <div id="pp-campo-wrap">
+            <input type="text"
+                   id="pp-input"
+                   placeholder="La tua parola segreta..."
+                   autocomplete="off"
+                   autocorrect="off"
+                   spellcheck="false"
+                   maxlength="60">
+            <button class="btn-pp-invia" id="btn-pp-invia" onClick="inviaPassphrase()">
+                <i class="fas fa-check me-1"></i> Conferma
+            </button>
+            <div class="pp-feedback info" id="pp-feedback">
+                <i class="fas fa-info-circle"></i>
+                Inserisci una parola che ricordi solo tu
+            </div>
+        </div>
+
+        <!-- Link WhatsApp — fuori dal campo, non viene mai nascosto -->
+        <div class="pp-whatsapp" id="pp-whatsapp" style="display:none;">
+            <a href="#" id="pp-wa-link" target="_blank" rel="noopener">
+                <i class="fab fa-whatsapp fa-lg"></i>
+                Inviamela su WhatsApp per non dimenticarla
+            </a>
+            <div class="pp-wa-note">Si aprirà WhatsApp — manda il messaggio a te stesso</div>
+        </div>
+    </div>
+
+    <!-- Stato: già associata in questa sessione -->
+    <div id="pp-already-wrap" style="display:none;">
+        <div class="pp-already">
+            <i class="fas fa-star text-warning"></i>
+            <div>
+                Chiave Moka attiva — i tuoi punti vengono accumulati!
+                <div style="font-size:0.72rem; font-weight:400; color:#166534; margin-top:2px;">
+                    Punti questa sera: <strong id="pp-punti-sera">—</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 4 SEZIONI -->
+<div class="sezioni-grid">
+
+    <a class="sezione-card s-ordina" id="link-ordina" href="#">
+        <div class="s-icon"><i class="fas fa-utensils"></i></div>
+        <div class="s-label">Ordina</div>
+        <div class="s-desc">Scegli dal menu e invia alla cucina</div>
+        <i class="fas fa-chevron-right s-arrow"></i>
+    </a>
+
+    <a class="sezione-card s-offerte" href="#" onClick="apriOfferte(event)">
+        <div class="s-icon"><i class="fas fa-tag"></i></div>
+        <div class="s-label">Offerte</div>
+        <div class="s-desc">Promozioni e piatti del giorno</div>
+        <i class="fas fa-chevron-right s-arrow"></i>
+    </a>
+
+    <a class="sezione-card s-punti" id="link-punti" href="#" onClick="apriPunti(event)">
+        <div class="punti-badge" id="punti-badge">0 pt</div>
+        <div class="s-icon"><i class="fas fa-star"></i></div>
+        <div class="s-label">I miei punti</div>
+        <div class="s-desc">Scopri i premi che ti aspettano</div>
+        <i class="fas fa-chevron-right s-arrow"></i>
+    </a>
+
+    <a class="sezione-card s-gioco" href="#" onClick="apriGioco(event)">
+        <div class="s-icon"><i class="fas fa-dice"></i></div>
+        <div class="s-label">Il Gioco</div>
+        <div class="s-desc">Lancia i dadi e vinci premi</div>
+        <i class="fas fa-chevron-right s-arrow"></i>
+    </a>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+    <div id="myToast" class="toast align-items-center text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toast-text"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+'use strict';
+
+// ── PARAMETRI URL ─────────────────────────────────────────
+const params         = new URLSearchParams(window.location.search);
+const SESSIONE_TOK   = params.get('sessione') || '';
+
+// Parametri che potrebbero già essere nell'URL (caso cameriere)
+let TAVOLO_ID      = params.get('tavolo')              || '';
+let CLIENTE_LETT   = params.get('cliente')             || '';
+let SESSIONE_CLI   = params.get('sessione_cliente_id') || '';
+
+// Chiave sessionStorage basata sul token (stabile per tutta la serata)
+const SS_KEY = `moka_cliente_${SESSIONE_TOK}`;
+const PP_KEY = () => `moka_pp_${TAVOLO_ID}_${CLIENTE_LETT}`;
+
+// Pulizia difensiva: se non c'è token nell'URL, elimina tutti i dati locali
+if (!SESSIONE_TOK && !params.get('tavolo')) {
+    Object.keys(sessionStorage).filter(k => k.startsWith('moka_')).forEach(k => sessionStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('cliente_')).forEach(k => localStorage.removeItem(k));
+}
+
+let toastEl, toastBody;
+let nomeCliente    = 'ospite';
+let numTavolo      = '';
+let passphraseGiaAssociata = false;
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    toastEl   = new bootstrap.Toast(document.getElementById('myToast'), { delay: 3000 });
+    toastBody = document.getElementById('toast-text');
+
+    // Fase 1: risolvi tavolo e cliente
+    await risolviSessione();
+
+    // Fase 2: aggiorna link menu con parametri completi
+    document.getElementById('link-ordina').href = buildUrl('menu.html');
+
+    // Fase 3: controlla passphrase già inserita questa sessione
+    const ppSalvata = sessionStorage.getItem(PP_KEY());
+    if (ppSalvata) {
+        mostraStatoPPAttiva();
+        await caricaPunti();
+    }
+
+    document.getElementById('loader').classList.add('hidden');
+});
+
+// ── COSTRUISCE URL CON PARAMETRI ─────────────────────────
+function buildUrl(pagina) {
+    const p = new URLSearchParams();
+    if (TAVOLO_ID)    p.set('tavolo',              TAVOLO_ID);
+    if (CLIENTE_LETT) p.set('cliente',             CLIENTE_LETT);
+    if (SESSIONE_CLI) p.set('sessione_cliente_id', SESSIONE_CLI);
+    if (SESSIONE_TOK) p.set('sessione',            SESSIONE_TOK);
+    return pagina + '?' + p.toString();
+}
+
+// ── RISOLVI SESSIONE ─────────────────────────────────────
+async function risolviSessione() {
+
+    // Caso A: URL completo — verifica che la sessione sia ancora valida
+    if (TAVOLO_ID && CLIENTE_LETT && SESSIONE_CLI) {
+
+        // Se abbiamo anche il token, verifica che la sessione tavolo sia ancora attiva
+        if (SESSIONE_TOK) {
+            try {
+                const rInfo = await fetch('../api/tavoli/sessione-info.php', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ sessione_token: SESSIONE_TOK })
+                });
+                const dInfo = await rInfo.json();
+
+                // Sessione non trovata o tavolo non più attivo
+                if (!dInfo.success || dInfo.stato !== 'attiva') {
+                    mostraSessioneScaduta();
+                    return;
+                }
+
+                numTavolo = dInfo.tavolo_numero || TAVOLO_ID;
+
+            } catch(e) {
+                console.warn('Errore verifica sessione tavolo:', e);
+                // In caso di errore di rete lasciamo passare — non blocchiamo il cliente
+            }
+        }
+
+        // Verifica che il cliente esista ancora nel DB (non sia stato resettato)
+        try {
+            const rCli = await fetch(`../api/clienti/get-clienti-registrati.php?tavolo_id=${TAVOLO_ID}`);
+            const dCli = await rCli.json();
+
+            if (dCli.success) {
+                const clienti = dCli.clienti || {};
+                // Controlla che la sessione_cliente_id sia ancora presente
+                const clienteTrovato = Object.values(clienti).find(c => c.id === SESSIONE_CLI);
+
+                if (!clienteTrovato) {
+                    // Il cliente non esiste più — sessione resettata o vecchia
+                    mostraSessioneScaduta();
+                    return;
+                }
+
+                // Cliente valido — aggiorna il nome reale
+                nomeCliente = clienteTrovato.nome || ('Cliente ' + CLIENTE_LETT);
+            }
+        } catch(e) {
+            console.warn('Errore verifica cliente:', e);
+            // In caso di errore di rete lasciamo passare
+        }
+
+        aggiornaUI();
+        return;
+    }
+
+    // Controlla sessionStorage: già registrato in questa sessione browser
+    const saved = sessionStorage.getItem(SS_KEY);
+    if (saved) {
+        try {
+            const dati = JSON.parse(saved);
+            TAVOLO_ID    = dati.tavolo_id    || '';
+            CLIENTE_LETT = dati.lettera      || '';
+            SESSIONE_CLI = dati.sessione_cli || '';
+            nomeCliente  = dati.nome         || 'ospite';
+            numTavolo    = dati.tavolo_num   || TAVOLO_ID;
+            aggiornaUI();
+            document.getElementById('link-ordina').href = buildUrl('menu.html');
+            return;
+        } catch(e) {
+            sessionStorage.removeItem(SS_KEY);
+        }
+    }
+
+    // Caso B: nessun parametro valido → pulisci localStorage e blocca
+    if (!SESSIONE_TOK) {
+        // Rimuove eventuali dati salvati da sessioni precedenti
+        Object.keys(localStorage).filter(k => k.startsWith('cliente_')).forEach(k => localStorage.removeItem(k));
+        sessionStorage.clear();
+
+        document.getElementById('loader').classList.add('hidden');
+        document.querySelector('.welcome-box').innerHTML = `
+            <h2>📷 Scansiona il QR code</h2>
+            <p>Per accedere al menu inquadra il codice QR sul tuo tavolo con la fotocamera del cellulare.</p>
+        `;
+        document.getElementById('pp-box').style.display = 'none';
+        document.querySelector('.sezioni-grid').style.display = 'none';
+        return;
+    }
+
+    try {
+        // Step 1: tavolo_id dal token
+        const rInfo = await fetch('../api/tavoli/sessione-info.php', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ sessione_token: SESSIONE_TOK })
+        });
+        if (!rInfo.ok) throw new Error('sessione-info non disponibile');
+        const dInfo = await rInfo.json();
+        if (!dInfo.success) throw new Error(dInfo.error || 'Sessione non trovata');
+
+        TAVOLO_ID = String(dInfo.tavolo_id);
+        numTavolo = dInfo.tavolo_numero || TAVOLO_ID;
+
+        // Step 2: registra il cliente e ottieni lettera
+        const rReg = await fetch('../api/clienti/registra-cliente.php', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ tavolo_id: parseInt(TAVOLO_ID), tipo: 'qr' })
+        });
+        if (!rReg.ok) throw new Error('registra-cliente non disponibile');
+        const dReg = await rReg.json();
+        if (!dReg.success) throw new Error(dReg.error || 'Registrazione fallita');
+
+        CLIENTE_LETT = dReg.lettera    || '';
+        SESSIONE_CLI = dReg.session_id || '';
+        nomeCliente  = 'Cliente ' + CLIENTE_LETT;
+
+        // Salva in sessionStorage: no ri-registrazione al refresh
+        sessionStorage.setItem(SS_KEY, JSON.stringify({
+            tavolo_id:    TAVOLO_ID,
+            tavolo_num:   numTavolo,
+            lettera:      CLIENTE_LETT,
+            sessione_cli: SESSIONE_CLI,
+            nome:         nomeCliente
+        }));
+
+        // Aggiorna URL nella barra del browser senza ricaricare
+        const nomePagina = window.location.pathname.split('/').pop();
+        window.history.replaceState({}, '', nomePagina + '?' + new URLSearchParams({
+            tavolo:              TAVOLO_ID,
+            cliente:             CLIENTE_LETT,
+            sessione_cliente_id: SESSIONE_CLI,
+            sessione:            SESSIONE_TOK
+        }).toString());
+
+    } catch(e) {
+        console.warn('Errore risolvi sessione:', e.message);
+    }
+
+    aggiornaUI();
+}
+
+// ── CARICA NOME CLIENTE (caso A) ─────────────────────────
+async function caricaNomeCliente() {
+    if (!TAVOLO_ID || !CLIENTE_LETT) return;
+    try {
+        const r = await fetch(`../api/clienti/get-clienti-registrati.php?tavolo_id=${TAVOLO_ID}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.success) return;
+        const cliente = (d.clienti || {})[CLIENTE_LETT];
+        if (cliente) {
+            nomeCliente = cliente.nome || ('Cliente ' + CLIENTE_LETT);
+            numTavolo   = TAVOLO_ID;
+        }
+    } catch(e) {
+        console.warn('Errore caricamento nome cliente:', e);
+    }
+}
+
+// ── AGGIORNA UI ───────────────────────────────────────────
+function aggiornaUI() {
+    document.getElementById('header-tavolo').textContent          = numTavolo || TAVOLO_ID || '—';
+    document.getElementById('header-lettera').textContent         = CLIENTE_LETT || '?';
+    document.getElementById('header-nome').textContent            = nomeCliente;
+    document.getElementById('nome-cliente-benvenuto').textContent = nomeCliente;
+    document.getElementById('num-tavolo-benvenuto').textContent   = numTavolo || TAVOLO_ID || '—';
+}
+
+// ── SESSIONE SCADUTA ──────────────────────────────────────
+function mostraSessioneScaduta() {
+    // Pulisce tutti i dati locali di questa sessione
+    sessionStorage.removeItem(SS_KEY);
+    Object.keys(sessionStorage).filter(k => k.startsWith('moka_')).forEach(k => sessionStorage.removeItem(k));
+
+    document.getElementById('loader').classList.add('hidden');
+    document.querySelector('.welcome-box').innerHTML = `
+        <h2>⏱️ Sessione scaduta</h2>
+        <p>Questa pagina non è più valida. Scansiona di nuovo il QR code sul tuo tavolo per accedere al menu.</p>
+    `;
+    document.getElementById('pp-box').style.display    = 'none';
+    document.querySelector('.sezioni-grid').style.display = 'none';
+}
+
+// ── PASSPHRASE ────────────────────────────────────────────
+function apriCampoPassphrase() {
+    document.getElementById('btn-pp-attiva').style.display = 'none';
+    document.getElementById('pp-campo-wrap').style.display = 'block';
+    document.getElementById('pp-input').focus();
+}
+
+async function inviaPassphrase() {
+    const input   = document.getElementById('pp-input');
+    const valore  = input.value.trim();
+    const btnInvia = document.getElementById('btn-pp-invia');
+    const feedback = document.getElementById('pp-feedback');
+
+    if (!valore) {
+        setFeedback('err', 'fa-exclamation-circle', 'Inserisci una parola o frase');
+        input.focus();
+        return;
+    }
+    if (valore.length < 3) {
+        setFeedback('err', 'fa-exclamation-circle', 'Troppo corta — almeno 3 caratteri');
+        input.classList.add('error');
+        return;
+    }
+
+    btnInvia.disabled = true;
+    setFeedback('info', 'fa-spinner fa-spin', 'Verifica in corso...');
+
+    try {
+        const r = await fetch('../api/fedelta/associa-passphrase.php', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                passphrase:          valore,
+                sessione_cliente_id: SESSIONE_CLI,
+                tavolo_id:           parseInt(TAVOLO_ID),
+                cliente_lettera:     CLIENTE_LETT
+            })
+        });
+        const d = await r.json();
+
+        if (!d.success) {
+            // Passphrase già in uso da altri
+            input.classList.add('error');
+            setFeedback('err', 'fa-times-circle', d.error || 'Parola già utilizzata — scegline un\'altra');
+            btnInvia.disabled = false;
+            return;
+        }
+
+        // Successo
+        input.classList.add('success');
+        setFeedback('ok', 'fa-check-circle', 'Chiave attivata! Punti in accumulo ✨');
+
+        // Salva in sessionStorage — non richiesto più per tutta la serata
+        sessionStorage.setItem(PP_KEY, valore);
+
+        // Mostra link WhatsApp — rimane sempre visibile
+        const waText  = encodeURIComponent(`☕ La mia chiave RistoranteMoka è: ${valore}\nNon condividerla con nessuno!`);
+        document.getElementById('pp-wa-link').href = `https://wa.me/?text=${waText}`;
+        document.getElementById('pp-whatsapp').style.display = 'block';
+
+        // Dopo 3 secondi nasconde solo il campo, il link WhatsApp resta
+        setTimeout(() => {
+            document.getElementById('pp-campo-wrap').style.display = 'none';
+            mostraStatoPPAttiva();
+            caricaPunti();
+        }, 3000);
+
+        toast('⭐ Chiave Moka attivata!', 'bg-success');
+
+    } catch(e) {
+        setFeedback('err', 'fa-exclamation-circle', 'Errore di rete — riprova');
+        btnInvia.disabled = false;
+    }
+}
+
+function mostraStatoPPAttiva() {
+    document.getElementById('pp-form-wrap').style.display   = 'none';
+    document.getElementById('pp-already-wrap').style.display = 'block';
+    passphraseGiaAssociata = true;
+}
+
+function setFeedback(cls, icon, msg) {
+    const el = document.getElementById('pp-feedback');
+    el.className = `pp-feedback ${cls}`;
+    el.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+}
+
+// ── PUNTI ─────────────────────────────────────────────────
+async function caricaPunti() {
+    if (!SESSIONE_CLI) return;
+    try {
+        const r = await fetch(`../api/fedelta/get-punti.php?sessione_cliente_id=${SESSIONE_CLI}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.success) return;
+
+        const puntiTotali = d.punti_totali || 0;
+        const puntiSera   = d.punti_sera   || 0;
+
+        // Mostra badge sulla card punti
+        if (puntiTotali > 0) {
+            const badge = document.getElementById('punti-badge');
+            badge.textContent = puntiTotali + ' pt';
+            badge.style.display = 'block';
+        }
+
+        // Aggiorna "punti questa sera"
+        document.getElementById('pp-punti-sera').textContent = puntiSera;
+
+    } catch(e) {
+        console.warn('Errore caricamento punti:', e);
+    }
+}
+
+// ── NAVIGAZIONE SEZIONI ───────────────────────────────────
+function apriOfferte(e) {
+    e.preventDefault();
+    toast('🏷️ Sezione offerte — in arrivo!', 'bg-warning text-dark');
+}
+
+function apriPunti(e) {
+    e.preventDefault();
+    if (!passphraseGiaAssociata && !sessionStorage.getItem(PP_KEY)) {
+        toast('⭐ Inserisci prima la tua Chiave Moka per vedere i punti!', 'bg-warning text-dark');
+        document.getElementById('pp-input').focus();
+        document.getElementById('pp-input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    // TODO: aprire pagina punti
+    toast('⭐ Sezione punti — in arrivo!', 'bg-primary');
+}
+
+function apriGioco(e) {
+    e.preventDefault();
+    // TODO: aprire il Gioco del Moka
+    toast('🎲 Il Gioco del Moka — in arrivo!', 'bg-success');
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg, cls = 'bg-success') {
+    document.getElementById('myToast').className = `toast align-items-center text-white border-0 ${cls}`;
+    toastBody.textContent = msg;
+    toastEl.show();
+}
+
+// ── ENTER su input passphrase ─────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('pp-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') inviaPassphrase();
+    });
+});
+</script>
+</body>
+</html>
